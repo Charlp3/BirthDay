@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>BirthDay v3.4 — Anniversaires & souvenirs</title>
+<style>
+  :root{
+    /* —— PALETTE OCRE SOUTENU (unique) —— */
+    --y-50:#fff3bf; --y-100:#ffe08a; --y-200:#ffd166; --y-300:#f2c94c;
+    --o-600:#d97706; --o-700:#b45309; /* textes/surlignages foncés */
+    --bg:linear-gradient(180deg,#fff3bf 0%, #ffe08a 50%, #ffd166 100%);
+    --bg-header:linear-gradient(180deg,#ffd166,#f2c94c);
+    --card:#fff3bf; --row:#ffeaa3; --field:#ffe08a; --line:rgba(0,0,0,.15);
+    --text:#2b1e00; --muted:#6b4c0f;
+
+    --btn-grad:linear-gradient(135deg,#f2c94c,#d97706);
+    --btn-shadow:0 10px 24px rgba(217,119,6,.35);
+
+    --radius:16px; --shadow-soft:0 2px 10px rgba(0,0,0,.08);
+  }
+
+  html{ -webkit-text-size-adjust:100% }
+  *,*::before,*::after{ box-sizing:border-box }
+  html,body{ height:100% }
+  body{
+    margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial;
+    font-size:clamp(16px,2.7vw,18px); line-height:1.35;
+    color:var(--text); background:var(--bg); background-attachment:fixed;
+  }
+
+  /* Entête */
+  header{ position:sticky; top:0; z-index:20; background:var(--bg-header); border-bottom:1px solid var(--line) }
+  .wrap{ max-width:1100px; margin:auto; padding:12px clamp(12px,3vw,24px) }
+  .title{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; color:#2b1e00 }
+  .logo{ width:36px; height:36px; border-radius:8px; overflow:hidden; display:grid; place-items:center; background:var(--btn-grad); box-shadow:var(--shadow-soft) }
+  .logo img{ width:100%; height:100%; object-fit:cover; display:none }
+  .brand{ display:flex; align-items:center; gap:8px; font-weight:900; font-size:clamp(18px,3.1vw,22px) }
+  .ver{ font-weight:900; color:#2b1e00; background:rgba(0,0,0,.06); padding:2px 8px; border-radius:999px }
+  .right{ margin-left:auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+  .topDate{ font-weight:900; color:var(--o-700) }
+
+  /* Contrôles cohérents */
+  input,select,textarea{
+    background:var(--field); border:1px solid var(--line); color:var(--text);
+    padding:10px 12px; border-radius:10px; outline:none; min-width:0;
+  }
+  input::placeholder{ color:var(--muted) }
+  #search{ width:clamp(180px,32vw,320px) }
+
+  button,.btn{
+    appearance:none; -webkit-appearance:none;
+    background:var(--btn-grad); color:#2b1e00; border:none;
+    padding:10px 14px; border-radius:12px; font-weight:900; cursor:pointer;
+    box-shadow:var(--btn-shadow); line-height:1.2; display:inline-flex; align-items:center; gap:.5ch;
+    transition:.2s transform,.2s box-shadow,.2s opacity;
+  }
+  button:hover{ box-shadow:0 12px 28px rgba(0,0,0,.12) }
+  button.secondary{ background:linear-gradient(135deg,#ffe08a,#f2c94c); border:1px solid rgba(0,0,0,.08) }
+  button.ghost{ background:transparent; border:2px dashed var(--o-600); box-shadow:none }
+  button.tiny{ padding:6px 8px; border-radius:8px }
+  button:active{ transform:translateY(1px) }
+
+  .tabs{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px }
+  .tab{ padding:10px 14px; border-radius:999px; border:1px solid var(--line); background:#ffe08a; color:#2b1e00; font-weight:900; box-shadow:var(--btn-shadow); cursor:pointer }
+  .tab.active{ background:var(--btn-grad); border-color:transparent }
+
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; box-shadow:var(--shadow-soft); }
+  .kpi{ display:flex; gap:12px; flex-wrap:wrap }
+  .kpi .card{ flex:1 1 min(220px,48%) }
+  .knum{ font-size:clamp(20px,3.7vw,26px); font-weight:800 }
+  .muted{ color:var(--muted) } .small{ font-size:clamp(12px,2.5vw,13px) }
+
+  .banner{ position:sticky; top:56px; z-index:15; display:none; gap:10px; align-items:center;
+    padding:12px 14px; border:1px solid var(--line); border-radius:14px; margin:12px auto 0; max-width:1100px;
+    background:linear-gradient(90deg,#22c55e,#86efac); color:#04220f }
+  .banner.mem{ background:linear-gradient(90deg,#b0892a,#8b6a20); color:#fff }
+
+  /* Listes */
+  .list{ margin-top:14px }
+  .row{ display:grid; grid-template-columns:28px 1fr 120px 170px 150px 120px 32px; gap:10px; align-items:center; padding:12px; border-radius:12px; border:1px solid var(--line); background:#ffeaa3; margin-bottom:8px }
+  .head{ background:transparent; border:none; color:#2b1e00; font-weight:900 }
+  .avatar{ width:28px; height:28px; border-radius:6px; display:grid; place-items:center; font-weight:900; color:#0b0e20; background:#ffd166 }
+  .pill{ padding:4px 8px; border-radius:999px; font-weight:800; font-size:12px; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line) }
+  .pill.alive{ background:rgba(40,167,69,.15); color:#146c2e }
+  .pill.dead{ background:rgba(220,53,69,.12); color:#a11b2b }
+  .pill.dog{ background:rgba(255,193,7,.25); color:#7a5a00 }
+  .monthTitle{ opacity:.9; margin:8px 2px 6px; font-weight:800 }
+  .flex{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .rightline{ margin-left:auto }
+
+  @media (max-width:520px){
+    .row{ grid-template-columns:28px 1fr; grid-auto-rows:auto }
+    .row > :nth-child(n+3){ grid-column:2 }
+    .row > :last-child{ grid-column:2; justify-self:end }
+  }
+
+  /* Tableau */
+  #tableView{ display:none }
+  table.table{ width:100%; border-collapse:separate; border-spacing:0; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden }
+  .table thead th{ position:sticky; top:0; background:#ffe08a; color:#2b1e00; text-align:left; padding:10px 12px; cursor:pointer; user-select:none; font-weight:900 }
+  .table tbody td{ padding:10px 12px; border-top:1px solid var(--line) }
+  .sort-ind{ margin-left:6px; opacity:.9 }
+
+  /* Modals */
+  .overlay{ position:fixed; inset:0; display:none; background:rgba(0,0,0,.35); z-index:50 }
+  .modal{ max-width:420px; margin:8vh auto; padding:0; overflow:hidden }
+  .modal .headbar{ display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--line); background:#ffe08a }
+  .modal .body{ padding:10px; background:var(--card) }
+
+  .footer{ opacity:.8; text-align:center; padding:24px; color:#4a3b00 }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="title">
+      <div class="logo" id="appLogo"><img id="logoImg" alt="logo"/></div>
+      <div class="brand">BirthDay <span class="ver">v3.4</span></div>
+      <div class="right">
+        <span class="topDate" id="todayTxt">01-01-1970</span>
+        <input id="search" placeholder="Rechercher un nom…" />
+        <button id="celebrateBtn" class="secondary">🎊 Fêter</button>
+        <label class="btn" for="csvInput">Importer CSV</label>
+        <input id="csvInput" type="file" accept=".csv,text/csv" style="display:none"/>
+        <button id="clearAllBtn" class="secondary">Effacer toute la liste</button>
+        <button id="addBtn" class="ghost">+ Ajouter</button>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-filter="all">Tous</div>
+      <div class="tab" data-filter="alive">Vivants</div>
+      <div class="tab" data-filter="dead">Décédés</div>
+      <div class="tab" data-filter="dog">Chiens</div>
+      <div class="tab" data-filter="soon">Prochains (7j)</div>
+      <div class="tab" data-filter="table">Tableau</div>
+      <div class="tab" data-filter="settings">Paramètres</div>
+    </div>
+  </div>
+</header>
+
+<!-- Bannière -->
+<div id="banner" class="banner"><strong id="bannerIcon">🎉</strong> <span id="bannerTitle"></span> — <span id="bannerText"></span> <span class="rightline"><button id="closeBanner" class="tiny">✖</button></span></div>
+
+<main class="wrap">
+  <!-- KPIs -->
+  <section class="kpi" id="kpi">
+    <div class="card"><div class="muted">Prochains 7 jours</div><div class="knum" id="k7">0</div></div>
+    <div class="card"><div class="muted">Total personnes</div><div class="knum" id="kTotal">0</div></div>
+    <div class="card"><div class="muted">Dont chiens</div><div class="knum" id="kDogs">0</div></div>
+  </section>
+
+  <!-- Aide import -->
+  <section class="card" id="helpImport" style="margin-top:16px">
+    <div class="small muted">CSV attendu : <code>Nom;DateNaissance;Décédé;DateDécès;Type;Notes</code> (JJ/MM/AAAA). Un aperçu s’affichera avant confirmation.</div>
+  </section>
+
+  <!-- Prochains -->
+  <section id="upcoming" class="card" style="margin-top:16px">
+    <div class="flex"><h3 style="margin:0">Prochains anniversaires</h3><div class="small">dans les 7 prochains jours</div></div>
+    <div class="row head"><div></div><div>Nom</div><div>Né le</div><div>Âge</div><div>Prochain</div><div>Décès</div><div></div></div>
+    <div id="upcomingList" class="list"></div>
+  </section>
+
+  <!-- Liste complète -->
+  <section id="list" class="card" style="margin-top:16px">
+    <div class="flex"><h3 style="margin:0">Liste complète</h3><div class="small">Tri : mois puis jour</div></div>
+    <div class="row head"><div></div><div>Nom</div><div>Né le</div><div>Âge</div><div>Prochain</div><div>Décès</div><div></div></div>
+    <div id="fullList" class="list"></div>
+  </section>
+
+  <!-- Tableau -->
+  <section id="tableView" class="card" style="margin-top:16px">
+    <div class="flex" style="gap:10px;align-items:center;flex-wrap:wrap">
+      <h3 style="margin:0">Tableau</h3>
+      <input id="tableSearch" placeholder="Rechercher (Nom/Type)…"/>
+      <span class="small muted">Clique un en-tête pour trier</span>
+    </div>
+    <div style="max-width:100%; overflow:auto">
+      <table class="table">
+        <thead>
+          <tr>
+            <th data-key="nom">Nom <span class="sort-ind"></span></th>
+            <th data-key="naissance">Naissance <span class="sort-ind"></span></th>
+            <th data-key="deces">Décès <span class="sort-ind"></span></th>
+            <th data-key="type">Type <span class="sort-ind"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Paramètres -->
+  <section id="settings" class="card" style="margin-top:16px; display:none">
+    <h3 style="margin:0 0 10px">Paramètres</h3>
+    <div class="flex" style="gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <label class="small muted">Sons (anniversaires vivants)</label>
+      <label><input id="soundToggle" type="checkbox" style="accent-color:#28a745" checked/> Activer</label>
+      <button id="testSound" class="secondary tiny">Tester son</button>
+    </div>
+    <div class="flex" style="gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <button id="testConfetti" class="secondary tiny">Tester confettis</button>
+      <button id="testBannerHuman" class="secondary tiny">Bannière humain</button>
+      <button id="testBannerDog" class="secondary tiny">Bannière chien</button>
+      <button id="testBannerMem" class="secondary tiny">Bannière souvenir</button>
+    </div>
+    <div class="flex" style="gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <label class="small muted">Logo de l’appli</label>
+      <input id="logoPicker" type="file" accept="image/*"/>
+      <button id="resetLogo" class="secondary tiny">Réinitialiser</button>
+      <div class="small muted">Le logo est redimensionné (256×256) et mémorisé localement.</div>
+    </div>
+  </section>
+
+  <div class="footer small">
+    © Pierre Charlier-2025 • Local & privé • BirthDay 🎂 • Format JJ/MM/AAAA ✔️
+  </div>
+</main>
+
+<!-- Modal PERSONNE -->
+<div id="modal" class="overlay">
+  <div class="card modal">
+    <div class="headbar">
+      <h3 id="modalTitle" style="margin:0;flex:1">Nouvelle entrée</h3>
+      <button id="closeModal" class="secondary tiny">Fermer</button>
+    </div>
+    <div class="body">
+      <div class="flex" style="gap:10px;flex-wrap:wrap">
+        <input id="fNom" placeholder="Nom" style="flex:1 1 220px" required/>
+        <select id="fType" style="flex:1 1 120px"><option>Humain</option><option>Chien</option></select>
+      </div>
+      <div class="flex" style="gap:10px;margin-top:10px;flex-wrap:wrap">
+        <div style="flex:1 1 160px">
+          <label class="small muted">Naissance (JJ/MM/AAAA)</label>
+          <input id="fNaissance" inputmode="numeric" placeholder="JJ/MM/AAAA" />
+        </div>
+        <div style="flex:1 1 120px">
+          <label class="small muted">Décédé ?</label>
+          <select id="fDecede"><option>Non</option><option>Oui</option></select>
+        </div>
+        <div style="flex:1 1 160px">
+          <label class="small muted">Date de décès (JJ/MM/AAAA)</label>
+          <input id="fDeces" inputmode="numeric" placeholder="JJ/MM/AAAA" />
+        </div>
+      </div>
+      <input id="fNotes" placeholder="Notes (optionnel)" style="margin-top:10px;width:100%"/>
+      <div class="flex" style="margin-top:10px">
+        <button id="saveBtn">Enregistrer</button>
+        <button id="deleteBtn" class="secondary" type="button">Supprimer</button>
+      </div>
+      <input type="hidden" id="fId" />
+    </div>
+  </div>
+</div>
+
+<!-- Modal IMPORT -->
+<div id="importDlg" class="overlay">
+  <div class="card modal" style="max-width:720px">
+    <div class="headbar">
+      <h3 style="margin:0;flex:1">Aperçu d’import CSV</h3>
+      <button id="cancelImport" class="secondary tiny">Annuler</button>
+    </div>
+    <div class="body">
+      <div id="csvPreview" style="max-height:50vh;overflow:auto;border:1px solid var(--line);border-radius:10px"></div>
+      <div class="flex" style="margin-top:10px">
+        <div class="small muted" id="csvStats"></div>
+        <div class="rightline"><button id="confirmImport">Importer</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(()=> {
+  const $  = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+
+  /* KEYS */
+  const STORE='birthday_famille_v1';
+  const SOUND='birthday_sounds';
+  const LOGO='birthday_logo';
+
+  /* Date haut de page */
+  const today = new Date();
+  $('#todayTxt').textContent = today.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}).replaceAll('/','-');
+
+  /* Utils */
+  const stripTime = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const isLeap = y => (y%4===0 && (y%100!==0 || y%400===0));
+  const daysBetween = (a,b)=> Math.round((stripTime(b)-stripTime(a))/(1000*60*60*24));
+  const fmtDateFr = d => new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const fmtDateISO = d => new Date(d).toISOString().slice(0,10);
+  const esc = s => (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]));
+  const initials = n => (n||'').split(/\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('');
+  const avColor = name => { let h=0; for(const ch of (name||'')) h=(h*31+ch.charCodeAt(0))%360; return `hsl(${h} 85% 60%)`; };
+
+  function toISO(s){
+    if(!s) return '';
+    s = String(s).trim();
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+    if(m){ let [_,d,mo,y]=m; const yy=(y.length===2?('20'+y):y).padStart(4,'0'); return `${yy}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`; }
+    const dt = new Date(s); if(!isNaN(dt)) return fmtDateISO(dt);
+    return '';
+  }
+  function ageOn(birth, onDate){
+    const b=new Date(birth), d=new Date(onDate);
+    let a = d.getFullYear()-b.getFullYear();
+    if(d.getMonth()<b.getMonth() || (d.getMonth()===b.getMonth() && d.getDate()<b.getDate())) a--;
+    return a;
+  }
+  function nextBirthday(birth, from=new Date()){
+    const b=new Date(birth), y=from.getFullYear();
+    let n=new Date(y,b.getMonth(),b.getDate());
+    if(b.getMonth()===1 && b.getDate()===29 && !isLeap(y)) n=new Date(y,2,1);
+    if(n<stripTime(from)){
+      const y2=y+1; n=new Date(y2,b.getMonth(),b.getDate());
+      if(b.getMonth()===1 && b.getDate()===29 && !isLeap(y2)) n=new Date(y2,2,1);
+    }
+    return n;
+  }
+
+  /* Data */
+  const load = () => { try { return JSON.parse(localStorage.getItem(STORE)||'[]'); } catch { return []; } };
+  const save = arr => localStorage.setItem(STORE, JSON.stringify(arr));
+  let data = load(); let filter='all', query='';
+
+  /* Audio */
+  const Sound = (()=>{ let ctx; return {
+    play(){ ctx ||= new (window.AudioContext||window.webkitAudioContext)();
+      const t=ctx.currentTime, g=ctx.createGain(); g.gain.value=.18; g.connect(ctx.destination);
+      [523.25,659.25,783.99,1046.5].forEach((f,i)=>{ const o=ctx.createOscillator(); const gg=ctx.createGain();
+        o.frequency.value=f; o.type=i%2?'triangle':'sine';
+        gg.gain.setValueAtTime(0,t+i*.14); gg.gain.linearRampToValueAtTime(.9,t+i*.14+.02); gg.gain.exponentialRampToValueAtTime(.001,t+i*.14+.9);
+        o.connect(gg); gg.connect(g); o.start(t+i*.14); o.stop(t+i*.14+1);
+      });
+    }
+  }})();
+  const soundOn = ()=> localStorage.getItem(SOUND)!=='off';
+  $('#soundToggle').checked = soundOn();
+  $('#soundToggle').addEventListener('change', e=> localStorage.setItem(SOUND, e.target.checked?'on':'off'));
+  $('#testSound').addEventListener('click', ()=> { if(soundOn()) Sound.play(); });
+
+  /* Confettis (10s, doux) */
+  function confetti(){
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const D=10000, c=document.createElement('canvas'); Object.assign(c.style,{position:'fixed',inset:0,pointerEvents:'none',zIndex:9999}); document.body.appendChild(c);
+    const ctx=c.getContext('2d'), DPR=Math.max(1,devicePixelRatio||1);
+    const resize=()=>{c.width=innerWidth*DPR; c.height=innerHeight*DPR}; resize();
+    const colors=['#f59e0b','#fbbf24','#fde68a','#86efac','#60a5fa','#f472b6','#a78bfa'];
+    const N=80,g=.03*DPR,parts=[];
+    for(let i=0;i<N;i++){ const s=1.4+Math.random()*2.2;
+      parts.push({shape:['rect','circle','tri'][Math.floor(Math.random()*3)],x:Math.random()*c.width,y:-Math.random()*c.height*.15,
+        vx:(Math.random()-.5)*.55*DPR,vy:Math.random()*.35*DPR,w:s*DPR,h:(s*1.2)*DPR,r:Math.random()*Math.PI,vr:(Math.random()-.5)*.05,col:colors[i%colors.length],drift:Math.random()*2*Math.PI});
+    }
+    const t0=performance.now(); (function loop(t){
+      ctx.clearRect(0,0,c.width,c.height); const el=t-t0;
+      for(const p of parts){ const sway=Math.sin((el/900)+p.drift)*.3*DPR; p.vy+=g; p.x+=p.vx+sway; p.y+=p.vy; p.r+=p.vr;
+        if(p.y>c.height+40*DPR){ p.y=-20*DPR; p.vy=Math.random()*.3*DPR; }
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.col;
+        if(el>D-1500) ctx.globalAlpha=Math.max(0,(D-el)/1500); // fade out
+        if(p.shape==='rect') ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+        else if(p.shape==='circle'){ ctx.beginPath(); ctx.arc(0,0,p.w/1.6,0,Math.PI*2); ctx.fill(); }
+        else { ctx.beginPath(); ctx.moveTo(-p.w/2,p.h/2); ctx.lineTo(0,-p.h/2); ctx.lineTo(p.w/2,p.h/2); ctx.closePath(); ctx.fill(); }
+        ctx.restore(); ctx.globalAlpha=1;
+      }
+      if(el<D) requestAnimationFrame(loop); else c.remove();
+    })(t0);
+  }
+
+  /* Logo persistant (redimension 256x256) */
+  function applyLogo(src){ const img=$('#logoImg'); if(src){ img.src=src; img.style.display='block'; } else { img.src=''; img.style.display='none'; } }
+  applyLogo(localStorage.getItem(LOGO)||'');
+  $('#logoPicker').addEventListener('change', async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const dataUrl = await resizeImageFile(f,256,256);
+    localStorage.setItem(LOGO, dataUrl); applyLogo(dataUrl); e.target.value='';
+  });
+  $('#resetLogo').addEventListener('click', ()=>{ localStorage.removeItem(LOGO); applyLogo(''); });
+  function resizeImageFile(file,w,h){
+    return new Promise((res,rej)=>{
+      const fr=new FileReader();
+      fr.onload=()=>{ const img=new Image(); img.onload=()=>{
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        const ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+        const r=Math.min(w/img.width,h/img.height), nw=img.width*r, nh=img.height*r;
+        ctx.drawImage(img,(w-nw)/2,(h-nh)/2,nw,nh); res(c.toDataURL('image/png',0.9));
+      }; img.onerror=rej; img.src=fr.result; }; fr.onerror=rej; fr.readAsDataURL(file);
+    });
+  }
+
+  /* CSV import */
+  let pending=null;
+  $('#csvInput').addEventListener('change', async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const text = await f.text(); showPreview(parseCSV(text)); e.target.value='';
+  });
+  function parseCSV(text){
+    text=text.replace(/^\uFEFF/,''); const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+    const delim = [',',';','\t'].map(d=>({d,c:(lines[0]||'').split(d).length})).sort((a,b)=>b.c-a.c)[0].d;
+    const H=(lines[0]||'').split(delim).map(s=>norm(s));
+    const idx = { nom:H.indexOf('nom')>-1?H.indexOf('nom'):-1, type:findHeader(['type','categorie'],H),
+      naissance:findHeader(['datenaissance','naissance','birth','birthday'],H),
+      decede:findHeader(['decédé','decede','decedé','deces?','decede?','deced','deces'],H),
+      deces:findHeader(['datedeces','datedécès','decesdate','datede deces','deces'],H),
+      notes:findHeader(['notes','note','commentaires','memo'],H)
+    };
+    const rows=lines.slice(1).map(l=>l.split(delim));
+    const mapped=[], ignored=[];
+    rows.forEach((r,i)=>{
+      const get=j=>j>=0&&j<r.length?r[j]:'';
+      const nom=(get(idx.nom)||'').trim()||'Sans nom';
+      const type=/chien/i.test(get(idx.type)||'')?'Chien':'Humain';
+      const naissance=toISO(get(idx.naissance));
+      const deces=toISO(get(idx.deces));
+      const dRaw=(get(idx.decede)||'').trim();
+      const decede=/^o/ui.test(dRaw)||/^true$/i.test(dRaw)||/^1$/.test(dRaw);
+      if(!naissance){ ignored.push(i+2); return; }
+      mapped.push({id:crypto.randomUUID(), nom, type, naissance, decede, deces:deces||null, notes:(get(idx.notes)||'').trim()});
+    });
+    return {mapped,ignored};
+  }
+  function norm(s){ return (s||'').toString().normalize('NFKC').toLowerCase().replace(/\s+/g,'').replace(/[’']/g,"'").replace(/[éèêë]/g,'e').replace(/[àâä]/g,'a').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/[ûü]/g,'u').replace(/ç/g,'c'); }
+  function findHeader(aliases,H){ for(const a of aliases){ const i=H.indexOf(a); if(i>-1) return i; } return -1; }
+  function showPreview(p){
+    const merges = countMerges(data,p.mapped);
+    $('#csvPreview').innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:14px">
+      <thead><tr>${['Nom','Type','Naissance','Décédé','Décès','Notes'].map(h=>`<th style="text-align:left;padding:6px;border-bottom:1px solid var(--line)">${h}</th>`).join('')}</tr></thead>
+      <tbody>${p.mapped.slice(0,12).map(x=>`<tr>
+        <td style="padding:6px;border-bottom:1px solid var(--line)">${esc(x.nom)}</td>
+        <td style="padding:6px;border-bottom:1px solid var(--line)">${x.type}</td>
+        <td style="padding:6px;border-bottom:1px solid var(--line)">${fmtDateFr(x.naissance)}</td>
+        <td style="padding:6px;border-bottom:1px solid var(--line)">${x.decede?'Oui':'Non'}</td>
+        <td style="padding:6px;border-bottom:1px solid var(--line)">${x.deces?fmtDateFr(x.deces):'—'}</td>
+        <td style="padding:6px;border-bottom:1px solid var(--line)">${esc(x.notes||'')}</td>
+      </tr>`).join('')}</tbody></table>`;
+    $('#csvStats').textContent = `${p.mapped.length} lignes • ${merges.updates} mises à jour • ${merges.inserts} ajouts${p.ignored.length?` • ${p.ignored.length} ignorées (naissance manquante)`:''}`;
+    pending=p; $('#importDlg').style.display='block';
+  }
+  $('#cancelImport').addEventListener('click', ()=>{ pending=null; $('#importDlg').style.display='none'; });
+  $('#confirmImport').addEventListener('click', ()=>{
+    if(!pending) return; data = mergeByKey(data,pending.mapped); save(data); pending=null; $('#importDlg').style.display='none'; render(true);
+  });
+  const key = p => `${(p.nom||'').toLowerCase()}|${p.naissance}`;
+  function countMerges(oldArr,newArr){ const set=new Set(oldArr.map(key)); let updates=0,inserts=0; for(const n of newArr){ set.has(key(n))?updates++:inserts++; } return {updates,inserts}; }
+  function mergeByKey(oldArr,newArr){ const map=new Map(oldArr.map(p=>[key(p),p])); for(const n of newArr){ const k=key(n); map.has(k)?Object.assign(map.get(k),n):map.set(k,n); } return [...map.values()]; }
+
+  /* Rendu */
+  function soon(n){ const now=new Date(); return data.map(p=>({p,next:nextBirthday(p.naissance,now)})).map(x=>({...x,days:daysBetween(now,x.next)})).filter(x=>x.days<=n); }
+  const sortMD = (a,b)=> new Date(a.naissance).getMonth()-new Date(b.naissance).getMonth() || new Date(a.naissance).getDate()-new Date(b.naissance).getDate();
+  const moName = m => new Date(2020,m,1).toLocaleDateString('fr-FR',{month:'long'});
+  const groupBy = (arr,f)=>arr.reduce((o,it)=>((o[f(it)]=o[f(it)]||[]).push(it),o),{});
+  const match = x => filter==='all'||(filter==='alive'?!x.decede&&x.type==='Humain':filter==='dead'?x.decede:filter==='dog'?x.type==='Chien':filter==='soon'?true:false);
+  const search = x => !query||(x.nom||'').toLowerCase().includes(query)||(x.notes||'').toLowerCase().includes(query);
+
+  function ageCell(p){ if(p.decede){ const au=ageOn(p.naissance,p.deces||new Date()); const aurait=ageOn(p.naissance,new Date()); return `${au} <span class="small muted">(aurait ${aurait})</span> †`; } return `${ageOn(p.naissance,new Date())}`; }
+  function rowHTML(p,days=null){
+    const nb=nextBirthday(p.naissance); const d=days==null?daysBetween(new Date(),nb):days;
+    const decTxt=p.deces?('✝︎ '+fmtDateFr(p.deces)):'—'; const pills=[p.type==='Chien'?`<span class="pill dog">🐶 Chien</span>`:'', p.decede?`<span class="pill dead">✝︎ Décédé</span>`:`<span class="pill alive">✓ Vivant</span>`].join(' ');
+    const bg=p.decede?'#101010':avColor(p.nom), col=p.decede?'#bdbdbd':'#0b0e20';
+    return `<div class="row" data-id="${p.id}">
+      <div class="avatar" style="background:${bg};color:${col}">${initials(p.nom)}</div>
+      <div><div class="flex"><strong>${esc(p.nom)}</strong> ${pills}</div><div class="small muted">${esc(p.notes||'')}</div></div>
+      <div class="muted">${fmtDateFr(p.naissance)}</div>
+      <div>${ageCell(p)}</div>
+      <div>${fmtDateFr(nb)} <span class="small muted">(${d} j)</span></div>
+      <div class="muted">${decTxt}</div>
+      <div><button class="secondary tiny" onclick="App.edit('${p.id}')">✏️</button></div>
+    </div>`;
+  }
+
+  function render(play=false){
+    const s=soon(7); $('#k7').textContent=s.length; $('#kTotal').textContent=data.filter(p=>p.type==='Humain').length; $('#kDogs').textContent=data.filter(p=>p.type==='Chien').length;
+
+    const up = s.filter(x=>match(x.p)).filter(x=>search(x.p)).sort((a,b)=>a.days-b.days);
+    $('#upcomingList').innerHTML = up.map(x=>rowHTML(x.p,x.days)).join('') || `<div class="muted">R.A.S.</div>`;
+
+    const copy=data.slice().sort(sortMD).filter(match).filter(search);
+    const groups=groupBy(copy,p=>new Date(p.naissance).getMonth());
+    $('#fullList').innerHTML = Object.keys(groups).sort((a,b)=>a-b).map(m=>`<div class="monthGroup"><div class="monthTitle">${moName(+m)}</div>${groups[m].map(p=>rowHTML(p)).join('')}</div>`).join('') || `<div class="muted">Aucune donnée. Utilise « + Ajouter ».</div>`;
+
+    if(play) showTodayBanner(true); else showTodayBanner(false);
+    renderTable();
+  }
+
+  /* Banner & célébrations (confettis pour tous) */
+  function listNames(arr){ const names=arr.map(p=>esc(p.nom)); return names.length<=2?names.join(' et '):names.slice(0,2).join(', ')+' et '+(names.length-2)+' autres'; }
+  function showBanner(cls,ico,title,parts){ const b=$('#banner'); $('#bannerIcon').textContent=ico; $('#bannerTitle').textContent=title; $('#bannerText').innerHTML=parts.join(' • '); b.className='banner '+(cls||''); b.style.display='flex'; }
+  function showTodayBanner(run){
+    const d=new Date(), MD=x=>`${x.getMonth()}-${x.getDate()}`;
+    const human = data.filter(p=>!p.decede && p.type!=='Chien' && ((new Date(p.naissance).getMonth()===d.getMonth() && new Date(p.naissance).getDate()===d.getDate()) || (new Date(p.naissance).getMonth()===1 && new Date(p.naissance).getDate()===29 && !isLeap(d.getFullYear()) && MD(d)==='2-1')));
+    const dog   = data.filter(p=>!p.decede && p.type==='Chien' && ((new Date(p.naissance).getMonth()===d.getMonth() && new Date(p.naissance).getDate()===d.getDate()) || (new Date(p.naissance).getMonth()===1 && new Date(p.naissance).getDate()===29 && !isLeap(d.getFullYear()) && MD(d)==='2-1')));
+    const memH  = data.filter(p=>p.decede && p.type!=='Chien' && p.deces && new Date(p.deces).getMonth()===d.getMonth() && new Date(p.deces).getDate()===d.getDate());
+    const memD  = data.filter(p=>p.decede && p.type==='Chien' && p.deces && new Date(p.deces).getMonth()===d.getMonth() && new Date(p.deces).getDate()===d.getDate());
+    if(!(human.length||dog.length||memH.length||memD.length)){ $('#banner').style.display='none'; return; }
+    const parts=[]; let cls=''; if(dog.length){ cls=''; parts.push(`<strong>${listNames(dog)}</strong> — joyeux anniversaire !`); if(run){confetti(); if(soundOn()) Sound.play();}}
+    if(human.length){ parts.push(`<strong>${listNames(human)}</strong> — joyeux anniversaire !`); if(run){confetti(); if(soundOn()) Sound.play();}}
+    if(memD.length||memH.length){ cls='mem'; parts.push(`🕯️ Souvenir pour <strong>${listNames(memD.concat(memH))}</strong>`); }
+    showBanner(cls,'🎉','Aujourd’hui',parts);
+  }
+  $('#closeBanner').addEventListener('click', ()=> $('#banner').style.display='none');
+
+  /* TABLEAU tri/recherche */
+  let tSort={key:'nom',dir:1};
+  $('#tableSearch').addEventListener('input', renderTable);
+  $$('.table thead th').forEach(th=>th.addEventListener('click',()=>{ const k=th.dataset.key; tSort.dir=tSort.key===k?-tSort.dir:1; tSort.key=k; renderTable(); }));
+  function renderTable(){
+    const q=($('#tableSearch')?.value||'').trim().toLowerCase();
+    const arr=data.filter(p=>!q||(p.nom||'').toLowerCase().includes(q)||(p.type||'').toLowerCase().includes(q)).slice();
+    arr.sort((a,b)=>{
+      const k=tSort.key;
+      if(k==='nom'||k==='type') return tSort.dir*((a[k]||'').toLowerCase().localeCompare((b[k]||'').toLowerCase(),'fr'));
+      if(k==='naissance') return tSort.dir*(new Date(a.naissance)-new Date(b.naissance));
+      if(k==='deces'){ const va=a.deces?new Date(a.deces).getTime():Infinity, vb=b.deces?new Date(b.deces).getTime():Infinity; return tSort.dir*(va-vb); }
+      return 0;
+    });
+    $('#tableBody').innerHTML = arr.map(p=>`<tr><td>${esc(p.nom)}</td><td>${fmtDateFr(p.naissance)}</td><td>${p.deces?fmtDateFr(p.deces):'—'}</td><td>${p.type}</td></tr>`).join('') || `<tr><td colspan="4" class="muted" style="padding:12px">Aucune donnée.</td></tr>`;
+    $$('.table thead th .sort-ind').forEach(s=>s.textContent=''); const act=document.querySelector('.table thead th[data-key="'+tSort.key+'"] .sort-ind'); if(act) act.textContent=tSort.dir===1?'↑':'↓';
+  }
+
+  /* Événements globaux */
+  $('#celebrateBtn').addEventListener('click', confetti);
+  $('#testConfetti').addEventListener('click', confetti);
+  $('#testBannerHuman').addEventListener('click', ()=> showBanner('', '🎉', 'Anniversaire', ['<strong>(exemple)</strong> — joyeux anniversaire !']));
+  $('#testBannerDog').addEventListener('click', ()=> showBanner('', '🎉', 'Anniversaire (chien)', ['<strong>(exemple)</strong> — joyeux anniversaire !']));
+  $('#testBannerMem').addEventListener('click', ()=> showBanner('mem', '🕯️', 'Souvenir', ['<strong>(exemple)</strong>']));
+
+  $('#search').addEventListener('input', e=>{ query=e.target.value.trim().toLowerCase(); render(false); });
+  $('#tabs').addEventListener('click', e=>{
+    const t=e.target.closest('.tab'); if(!t) return;
+    $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); filter=t.dataset.filter;
+
+    const isSettings=filter==='settings', isTable=filter==='table';
+    $('#settings').style.display=isSettings?'block':'none';
+    $('#tableView').style.display=isTable?'block':'none';
+    const showMain = (!isSettings && !isTable);
+    $('#kpi').style.display = showMain?'flex':'none';
+    $('#helpImport').style.display = showMain?'block':'none';
+    $('#upcoming').style.display = showMain?'block':'none';
+    $('#list').style.display = showMain?'block':'none';
+    if(isTable) renderTable(); else if(!isSettings) render(false);
+  });
+
+  // Modal CRUD
+  function openModal(p=null){
+    $('#modalTitle').textContent = p?'Modifier':'Nouvelle entrée';
+    $('#fId').value = p?.id || '';
+    $('#fNom').value = p?.nom || '';
+    $('#fType').value = p?.type || 'Humain';
+    $('#fNaissance').value = p?.naissance ? fmtDateFr(p.naissance) : '';
+    $('#fDecede').value = p?.decede ? 'Oui' : 'Non';
+    $('#fDeces').value = p?.deces ? fmtDateFr(p.deces) : '';
+    $('#fNotes').value = p?.notes || '';
+    $('#deleteBtn').style.display = p ? 'inline-flex' : 'none';
+    $('#modal').style.display='block';
+  }
+  function closeModal(){ $('#modal').style.display='none'; }
+  $('#addBtn').addEventListener('click', ()=> openModal());
+  $('#closeModal').addEventListener('click', closeModal);
+  $('#modal').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
+
+  $('#saveBtn').addEventListener('click', e=>{
+    e.preventDefault();
+    const p={
+      id: $('#fId').value || crypto.randomUUID(),
+      nom: ($('#fNom').value||'').trim() || 'Sans nom',
+      type: $('#fType').value,
+      naissance: toISO($('#fNaissance').value),
+      decede: $('#fDecede').value==='Oui',
+      deces: toISO($('#fDeces').value) || null,
+      notes: ($('#fNotes').value||'').trim()
+    };
+    if(!p.naissance){ alert('Date de naissance requise (JJ/MM/AAAA)'); return; }
+    const i=data.findIndex(x=>x.id===p.id); if(i>=0) data[i]=p; else data.push(p);
+    save(data); closeModal(); render(false); renderTable();
+  });
+  $('#deleteBtn').addEventListener('click', ()=>{
+    const id=$('#fId').value; if(!id) return;
+    if(confirm('Supprimer cette entrée ?')){ data=data.filter(x=>x.id!==id); save(data); closeModal(); render(false); renderTable(); }
+  });
+
+  // Tout effacer
+  $('#clearAllBtn').addEventListener('click', ()=>{
+    if(!confirm('Supprimer TOUTES les entrées ?')) return;
+    if(!confirm('Confirmer la suppression définitive ?')) return;
+    data=[]; save(data); render(false); renderTable();
+  });
+
+  // Expose edit pour les boutons ✏️
+  window.App = { edit:(id)=>{ const p=data.find(x=>x.id===id); if(p) openModal(p); } };
+
+  /* Démo si vide */
+  if(data.length===0){
+    data=[
+      {id:crypto.randomUUID(), nom:'Alice Dupont', type:'Humain', naissance:'1990-10-05', decede:false, deces:null, notes:'Cousine'},
+      {id:crypto.randomUUID(), nom:'Rex', type:'Chien', naissance:'2017-12-01', decede:false, deces:null, notes:'Golden'},
+      {id:crypto.randomUUID(), nom:'Grand-Père Paul', type:'Humain', naissance:'1942-02-29', decede:true, deces:'2018-03-10', notes:'Aimait le jardinage'}
+    ];
+    save(data);
+  }
+  render(true);
+})();
+</script>
+</body>
+</html>
