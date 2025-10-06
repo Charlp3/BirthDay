@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>BirthDay v3.4 — Anniversaires & souvenirs</title>
+<title>BirthDay v3.5 — Anniversaires & souvenirs</title>
 <style>
   :root{
     /* —— PALETTE OCRE SOUTENU (unique) —— */
     --y-50:#fff3bf; --y-100:#ffe08a; --y-200:#ffd166; --y-300:#f2c94c;
-    --o-600:#d97706; --o-700:#b45309; /* textes/surlignages foncés */
+    --o-600:#d97706; --o-700:#b45309;
     --bg:linear-gradient(180deg,#fff3bf 0%, #ffe08a 50%, #ffd166 100%);
     --bg-header:linear-gradient(180deg,#ffd166,#f2c94c);
     --card:#fff3bf; --row:#ffeaa3; --field:#ffe08a; --line:rgba(0,0,0,.15);
@@ -17,7 +17,7 @@
     --btn-grad:linear-gradient(135deg,#f2c94c,#d97706);
     --btn-shadow:0 10px 24px rgba(217,119,6,.35);
 
-    --radius:16px; --shadow-soft:0 2px 10px rgba(0,0,0,.08);
+    --shadow-soft:0 2px 10px rgba(0,0,0,.08);
   }
 
   html{ -webkit-text-size-adjust:100% }
@@ -102,11 +102,14 @@
   .table tbody td{ padding:10px 12px; border-top:1px solid var(--line) }
   .sort-ind{ margin-left:6px; opacity:.9 }
 
-  /* Modals */
+  /* Modals — version v3.5 : +20% */
   .overlay{ position:fixed; inset:0; display:none; background:rgba(0,0,0,.35); z-index:50 }
   .modal{ max-width:420px; margin:8vh auto; padding:0; overflow:hidden }
   .modal .headbar{ display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--line); background:#ffe08a }
-  .modal .body{ padding:10px; background:var(--card) }
+  .modal .body{ padding:12px; background:var(--card) }
+  .modal .body input,
+  .modal .body select{ font-size:1.15em; padding:12px 14px }
+  .modal .body button{ font-size:1.1em; padding:12px 16px }
 
   .footer{ opacity:.8; text-align:center; padding:24px; color:#4a3b00 }
 </style>
@@ -116,7 +119,7 @@
   <div class="wrap">
     <div class="title">
       <div class="logo" id="appLogo"><img id="logoImg" alt="logo"/></div>
-      <div class="brand">BirthDay <span class="ver">v3.4</span></div>
+      <div class="brand">BirthDay <span class="ver">v3.5</span></div>
       <div class="right">
         <span class="topDate" id="todayTxt">01-01-1970</span>
         <input id="search" placeholder="Rechercher un nom…" />
@@ -343,24 +346,36 @@
   $('#soundToggle').addEventListener('change', e=> localStorage.setItem(SOUND, e.target.checked?'on':'off'));
   $('#testSound').addEventListener('click', ()=> { if(soundOn()) Sound.play(); });
 
-  /* Confettis (10s, doux) */
+  /* Confettis lents (20s) */
   function confetti(){
     if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const D=10000, c=document.createElement('canvas'); Object.assign(c.style,{position:'fixed',inset:0,pointerEvents:'none',zIndex:9999}); document.body.appendChild(c);
+    const D=20000; // 20s
+    const c=document.createElement('canvas');
+    Object.assign(c.style,{position:'fixed',inset:0,pointerEvents:'none',zIndex:9999});
+    document.body.appendChild(c);
     const ctx=c.getContext('2d'), DPR=Math.max(1,devicePixelRatio||1);
     const resize=()=>{c.width=innerWidth*DPR; c.height=innerHeight*DPR}; resize();
     const colors=['#f59e0b','#fbbf24','#fde68a','#86efac','#60a5fa','#f472b6','#a78bfa'];
-    const N=80,g=.03*DPR,parts=[];
-    for(let i=0;i<N;i++){ const s=1.4+Math.random()*2.2;
-      parts.push({shape:['rect','circle','tri'][Math.floor(Math.random()*3)],x:Math.random()*c.width,y:-Math.random()*c.height*.15,
-        vx:(Math.random()-.5)*.55*DPR,vy:Math.random()*.35*DPR,w:s*DPR,h:(s*1.2)*DPR,r:Math.random()*Math.PI,vr:(Math.random()-.5)*.05,col:colors[i%colors.length],drift:Math.random()*2*Math.PI});
+    const N=60, g=.015*DPR;
+    const parts=[];
+    for(let i=0;i<N;i++){
+      const s=2+Math.random()*2;
+      parts.push({
+        shape:['rect','circle','tri'][Math.floor(Math.random()*3)],
+        x:Math.random()*c.width, y:-Math.random()*c.height*.5,
+        vx:(Math.random()-.5)*.30*DPR, vy:Math.random()*.20*DPR,
+        w:s*DPR, h:(s*1.2)*DPR, r:Math.random()*Math.PI, vr:(Math.random()-.5)*.02,
+        col:colors[i%colors.length], drift:Math.random()*2*Math.PI
+      });
     }
-    const t0=performance.now(); (function loop(t){
-      ctx.clearRect(0,0,c.width,c.height); const el=t-t0;
-      for(const p of parts){ const sway=Math.sin((el/900)+p.drift)*.3*DPR; p.vy+=g; p.x+=p.vx+sway; p.y+=p.vy; p.r+=p.vr;
-        if(p.y>c.height+40*DPR){ p.y=-20*DPR; p.vy=Math.random()*.3*DPR; }
+    const t0=performance.now();
+    (function loop(t){
+      const el=t-t0; ctx.clearRect(0,0,c.width,c.height);
+      for(const p of parts){
+        p.vy+=g; p.y+=p.vy; p.x+=p.vx+Math.sin((el/1200)+p.drift)*.4*DPR; p.r+=p.vr;
+        if(p.y>c.height+30*DPR){ p.y=-20*DPR; p.vy=Math.random()*.2*DPR; }
         ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.col;
-        if(el>D-1500) ctx.globalAlpha=Math.max(0,(D-el)/1500); // fade out
+        if(el>D-1500) ctx.globalAlpha=Math.max(0,(D-el)/1500);
         if(p.shape==='rect') ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
         else if(p.shape==='circle'){ ctx.beginPath(); ctx.arc(0,0,p.w/1.6,0,Math.PI*2); ctx.fill(); }
         else { ctx.beginPath(); ctx.moveTo(-p.w/2,p.h/2); ctx.lineTo(0,-p.h/2); ctx.lineTo(p.w/2,p.h/2); ctx.closePath(); ctx.fill(); }
@@ -447,6 +462,25 @@
   function countMerges(oldArr,newArr){ const set=new Set(oldArr.map(key)); let updates=0,inserts=0; for(const n of newArr){ set.has(key(n))?updates++:inserts++; } return {updates,inserts}; }
   function mergeByKey(oldArr,newArr){ const map=new Map(oldArr.map(p=>[key(p),p])); for(const n of newArr){ const k=key(n); map.has(k)?Object.assign(map.get(k),n):map.set(k,n); } return [...map.values()]; }
 
+  /* Saisie dates iPhone : auto "/" */
+  function attachDateAutoSlash(sel){
+    $$(sel).forEach(input=>{
+      input.addEventListener('input', e=>{
+        let v = e.target.value.replace(/\D/g,'').slice(0,8);
+        if (v.length > 2 && v.length <= 4) v = v.slice(0,2)+'/'+v.slice(2);
+        else if (v.length > 4) v = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4,8);
+        e.target.value = v;
+      });
+      input.addEventListener('blur', e=>{
+        // complète DD/MM/AAAA si utilisateur tape moins
+        let v = e.target.value.replace(/\D/g,'');
+        if(v.length===8){
+          e.target.value = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4,8);
+        }
+      });
+    });
+  }
+
   /* Rendu */
   function soon(n){ const now=new Date(); return data.map(p=>({p,next:nextBirthday(p.naissance,now)})).map(x=>({...x,days:daysBetween(now,x.next)})).filter(x=>x.days<=n); }
   const sortMD = (a,b)=> new Date(a.naissance).getMonth()-new Date(b.naissance).getMonth() || new Date(a.naissance).getDate()-new Date(b.naissance).getDate();
@@ -495,10 +529,10 @@
     const memH  = data.filter(p=>p.decede && p.type!=='Chien' && p.deces && new Date(p.deces).getMonth()===d.getMonth() && new Date(p.deces).getDate()===d.getDate());
     const memD  = data.filter(p=>p.decede && p.type==='Chien' && p.deces && new Date(p.deces).getMonth()===d.getMonth() && new Date(p.deces).getDate()===d.getDate());
     if(!(human.length||dog.length||memH.length||memD.length)){ $('#banner').style.display='none'; return; }
-    const parts=[]; let cls=''; if(dog.length){ cls=''; parts.push(`<strong>${listNames(dog)}</strong> — joyeux anniversaire !`); if(run){confetti(); if(soundOn()) Sound.play();}}
+    const parts=[]; if(dog.length){ parts.push(`<strong>${listNames(dog)}</strong> — joyeux anniversaire !`); if(run){confetti(); if(soundOn()) Sound.play();}}
     if(human.length){ parts.push(`<strong>${listNames(human)}</strong> — joyeux anniversaire !`); if(run){confetti(); if(soundOn()) Sound.play();}}
-    if(memD.length||memH.length){ cls='mem'; parts.push(`🕯️ Souvenir pour <strong>${listNames(memD.concat(memH))}</strong>`); }
-    showBanner(cls,'🎉','Aujourd’hui',parts);
+    if(memD.length||memH.length){ parts.push(`🕯️ Souvenir pour <strong>${listNames(memD.concat(memH))}</strong>`); }
+    showBanner('', '🎉','Aujourd’hui',parts);
   }
   $('#closeBanner').addEventListener('click', ()=> $('#banner').style.display='none');
 
@@ -555,6 +589,9 @@
     $('#fNotes').value = p?.notes || '';
     $('#deleteBtn').style.display = p ? 'inline-flex' : 'none';
     $('#modal').style.display='block';
+
+    // attache l’auto-slash quand la modale est ouverte
+    attachDateAutoSlash('#fNaissance, #fDeces');
   }
   function closeModal(){ $('#modal').style.display='none'; }
   $('#addBtn').addEventListener('click', ()=> openModal());
