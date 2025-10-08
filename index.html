@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>BirthDay v3.5 — Anniversaires & souvenirs</title>
+<title>BirthDay v3.6.1 — Anniversaires & souvenirs</title>
 <style>
   :root{
     /* —— PALETTE OCRE SOUTENU (unique) —— */
@@ -40,7 +40,7 @@
   .right{ margin-left:auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap }
   .topDate{ font-weight:900; color:var(--o-700) }
 
-  /* Contrôles cohérents */
+  /* Contrôles */
   input,select,textarea{
     background:var(--field); border:1px solid var(--line); color:var(--text);
     padding:10px 12px; border-radius:10px; outline:none; min-width:0;
@@ -102,7 +102,7 @@
   .table tbody td{ padding:10px 12px; border-top:1px solid var(--line) }
   .sort-ind{ margin-left:6px; opacity:.9 }
 
-  /* Modals — version v3.5 : +20% */
+  /* Modals — +20% */
   .overlay{ position:fixed; inset:0; display:none; background:rgba(0,0,0,.35); z-index:50 }
   .modal{ max-width:420px; margin:8vh auto; padding:0; overflow:hidden }
   .modal .headbar{ display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--line); background:#ffe08a }
@@ -119,7 +119,7 @@
   <div class="wrap">
     <div class="title">
       <div class="logo" id="appLogo"><img id="logoImg" alt="logo"/></div>
-      <div class="brand">BirthDay <span class="ver">v3.5</span></div>
+      <div class="brand">BirthDay <span class="ver">v3.6.1</span></div>
       <div class="right">
         <span class="topDate" id="todayTxt">01-01-1970</span>
         <input id="search" placeholder="Rechercher un nom…" />
@@ -152,11 +152,6 @@
     <div class="card"><div class="muted">Prochains 7 jours</div><div class="knum" id="k7">0</div></div>
     <div class="card"><div class="muted">Total personnes</div><div class="knum" id="kTotal">0</div></div>
     <div class="card"><div class="muted">Dont chiens</div><div class="knum" id="kDogs">0</div></div>
-  </section>
-
-  <!-- Aide import -->
-  <section class="card" id="helpImport" style="margin-top:16px">
-    <div class="small muted">CSV attendu : <code>Nom;DateNaissance;Décédé;DateDécès;Type;Notes</code> (JJ/MM/AAAA). Un aperçu s’affichera avant confirmation.</div>
   </section>
 
   <!-- Prochains -->
@@ -209,7 +204,13 @@
       <button id="testBannerDog" class="secondary tiny">Bannière chien</button>
       <button id="testBannerMem" class="secondary tiny">Bannière souvenir</button>
     </div>
-    <div class="flex" style="gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+
+    <!-- Aide import CSV déplacée ici -->
+    <div class="card" style="margin-top:8px">
+      <div class="small muted">CSV attendu : <code>Nom;DateNaissance;Décédé;DateDécès;Type;Notes</code> (JJ/MM/AAAA). Un aperçu s’affichera avant confirmation.</div>
+    </div>
+
+    <div class="flex" style="gap:12px;flex-wrap:wrap;align-items:center;margin-top:10px">
       <label class="small muted">Logo de l’appli</label>
       <input id="logoPicker" type="file" accept="image/*"/>
       <button id="resetLogo" class="secondary tiny">Réinitialiser</button>
@@ -330,41 +331,78 @@
   const save = arr => localStorage.setItem(STORE, JSON.stringify(arr));
   let data = load(); let filter='all', query='';
 
-  /* Audio */
-  const Sound = (()=>{ let ctx; return {
-    play(){ ctx ||= new (window.AudioContext||window.webkitAudioContext)();
-      const t=ctx.currentTime, g=ctx.createGain(); g.gain.value=.18; g.connect(ctx.destination);
-      [523.25,659.25,783.99,1046.5].forEach((f,i)=>{ const o=ctx.createOscillator(); const gg=ctx.createGain();
-        o.frequency.value=f; o.type=i%2?'triangle':'sine';
-        gg.gain.setValueAtTime(0,t+i*.14); gg.gain.linearRampToValueAtTime(.9,t+i*.14+.02); gg.gain.exponentialRampToValueAtTime(.001,t+i*.14+.9);
-        o.connect(gg); gg.connect(g); o.start(t+i*.14); o.stop(t+i*.14+1);
+  /* Audio (WebAudio) */
+  const Sound = (()=>{ 
+    let ctx, unlocked=false;
+    function ensure(){
+      if(!ctx){
+        ctx = new (window.AudioContext||window.webkitAudioContext)();
+      }
+      return ctx;
+    }
+    function tryResume(){
+      try{
+        const c=ensure();
+        if(c.state==='suspended') c.resume?.();
+      }catch{}
+    }
+    function unlockOnce(){
+      if(unlocked) return;
+      const handler = async ()=>{
+        try{ await ensure().resume(); unlocked=true; }catch{}
+        window.removeEventListener('pointerdown', handler, {capture:true});
+        window.removeEventListener('touchstart', handler, {capture:true});
+        window.removeEventListener('click', handler, {capture:true});
+      };
+      window.addEventListener('pointerdown', handler, {capture:true, once:true});
+      window.addEventListener('touchstart', handler, {capture:true, once:true});
+      window.addEventListener('click', handler, {capture:true, once:true});
+    }
+    document.addEventListener('visibilitychange', tryResume);
+    setTimeout(tryResume, 120);
+    setTimeout(tryResume, 800);
+
+    function playChord(){
+      const c=ensure();
+      const now = c.currentTime;
+      const master = c.createGain(); master.gain.value = 0.18; master.connect(c.destination);
+      [0,0.14,0.28,0.42].forEach((t,i)=>{
+        const osc = c.createOscillator(); const g=c.createGain();
+        const freqs=[523.25,659.25,783.99,1046.5];
+        osc.frequency.value = freqs[i]; osc.type = i%2 ? 'triangle' : 'sine';
+        g.gain.setValueAtTime(0, now+t);
+        g.gain.linearRampToValueAtTime(0.9, now+t+0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, now+t+0.9);
+        osc.connect(g); g.connect(master);
+        osc.start(now+t); osc.stop(now+t+1.0);
       });
     }
-  }})();
+    return { play:playChord, ensure, unlockOnce, tryResume };
+  })();
   const soundOn = ()=> localStorage.getItem(SOUND)!=='off';
   $('#soundToggle').checked = soundOn();
   $('#soundToggle').addEventListener('change', e=> localStorage.setItem(SOUND, e.target.checked?'on':'off'));
   $('#testSound').addEventListener('click', ()=> { if(soundOn()) Sound.play(); });
 
-  /* Confettis lents (20s) */
+  /* Confettis — plus lents & plus grands (≈25s) */
   function confetti(){
     if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const D=20000; // 20s
+    const D=25000; // 25s
     const c=document.createElement('canvas');
     Object.assign(c.style,{position:'fixed',inset:0,pointerEvents:'none',zIndex:9999});
     document.body.appendChild(c);
     const ctx=c.getContext('2d'), DPR=Math.max(1,devicePixelRatio||1);
     const resize=()=>{c.width=innerWidth*DPR; c.height=innerHeight*DPR}; resize();
     const colors=['#f59e0b','#fbbf24','#fde68a','#86efac','#60a5fa','#f472b6','#a78bfa'];
-    const N=60, g=.015*DPR;
+    const N=70, g=.012*DPR;
     const parts=[];
     for(let i=0;i<N;i++){
-      const s=2+Math.random()*2;
+      const s=3.2+Math.random()*3.2;
       parts.push({
         shape:['rect','circle','tri'][Math.floor(Math.random()*3)],
-        x:Math.random()*c.width, y:-Math.random()*c.height*.5,
-        vx:(Math.random()-.5)*.30*DPR, vy:Math.random()*.20*DPR,
-        w:s*DPR, h:(s*1.2)*DPR, r:Math.random()*Math.PI, vr:(Math.random()-.5)*.02,
+        x:Math.random()*c.width, y:-Math.random()*c.height*.4,
+        vx:(Math.random()-.5)*.24*DPR, vy:Math.random()*.16*DPR,
+        w:s*DPR, h:(s*1.2)*DPR, r:Math.random()*Math.PI, vr:(Math.random()-.5)*.018,
         col:colors[i%colors.length], drift:Math.random()*2*Math.PI
       });
     }
@@ -372,12 +410,12 @@
     (function loop(t){
       const el=t-t0; ctx.clearRect(0,0,c.width,c.height);
       for(const p of parts){
-        p.vy+=g; p.y+=p.vy; p.x+=p.vx+Math.sin((el/1200)+p.drift)*.4*DPR; p.r+=p.vr;
-        if(p.y>c.height+30*DPR){ p.y=-20*DPR; p.vy=Math.random()*.2*DPR; }
+        p.vy+=g; p.y+=p.vy; p.x+=p.vx+Math.sin((el/1300)+p.drift)*.45*DPR; p.r+=p.vr;
+        if(p.y>c.height+35*DPR){ p.y=-25*DPR; p.vy=Math.random()*.18*DPR; }
         ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.col;
         if(el>D-1500) ctx.globalAlpha=Math.max(0,(D-el)/1500);
         if(p.shape==='rect') ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
-        else if(p.shape==='circle'){ ctx.beginPath(); ctx.arc(0,0,p.w/1.6,0,Math.PI*2); ctx.fill(); }
+        else if(p.shape==='circle'){ ctx.beginPath(); ctx.arc(0,0,p.w/1.5,0,Math.PI*2); ctx.fill(); }
         else { ctx.beginPath(); ctx.moveTo(-p.w/2,p.h/2); ctx.lineTo(0,-p.h/2); ctx.lineTo(p.w/2,p.h/2); ctx.closePath(); ctx.fill(); }
         ctx.restore(); ctx.globalAlpha=1;
       }
@@ -385,7 +423,7 @@
     })(t0);
   }
 
-  /* Logo persistant (redimension 256x256) */
+  /* Logo persistant */
   function applyLogo(src){ const img=$('#logoImg'); if(src){ img.src=src; img.style.display='block'; } else { img.src=''; img.style.display='none'; } }
   applyLogo(localStorage.getItem(LOGO)||'');
   $('#logoPicker').addEventListener('change', async e=>{
@@ -451,7 +489,8 @@
         <td style="padding:6px;border-bottom:1px solid var(--line)">${x.deces?fmtDateFr(x.deces):'—'}</td>
         <td style="padding:6px;border-bottom:1px solid var(--line)">${esc(x.notes||'')}</td>
       </tr>`).join('')}</tbody></table>`;
-    $('#csvStats').textContent = `${p.mapped.length} lignes • ${merges.updates} mises à jour • ${merges.inserts} ajouts${p.ignored.length?` • ${p.ignored.length} ignorées (naissance manquante)`:''}`;
+    // —— CORRECTION ICI : plus de parenthèse en trop ——
+    $('#csvStats').textContent = `${(p.mapped.length||0)} lignes • ${merges.updates} mises à jour • ${merges.inserts} ajouts${p.ignored.length?` • ${p.ignored.length} ignorées (naissance manquante)`:''}`;
     pending=p; $('#importDlg').style.display='block';
   }
   $('#cancelImport').addEventListener('click', ()=>{ pending=null; $('#importDlg').style.display='none'; });
@@ -472,16 +511,13 @@
         e.target.value = v;
       });
       input.addEventListener('blur', e=>{
-        // complète DD/MM/AAAA si utilisateur tape moins
         let v = e.target.value.replace(/\D/g,'');
-        if(v.length===8){
-          e.target.value = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4,8);
-        }
+        if(v.length===8){ e.target.value = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4,8); }
       });
     });
   }
 
-  /* Rendu */
+  /* Rendu & filtres */
   function soon(n){ const now=new Date(); return data.map(p=>({p,next:nextBirthday(p.naissance,now)})).map(x=>({...x,days:daysBetween(now,x.next)})).filter(x=>x.days<=n); }
   const sortMD = (a,b)=> new Date(a.naissance).getMonth()-new Date(b.naissance).getMonth() || new Date(a.naissance).getDate()-new Date(b.naissance).getDate();
   const moName = m => new Date(2020,m,1).toLocaleDateString('fr-FR',{month:'long'});
@@ -519,7 +555,7 @@
     renderTable();
   }
 
-  /* Banner & célébrations (confettis pour tous) */
+  /* Bannière & célébrations */
   function listNames(arr){ const names=arr.map(p=>esc(p.nom)); return names.length<=2?names.join(' et '):names.slice(0,2).join(', ')+' et '+(names.length-2)+' autres'; }
   function showBanner(cls,ico,title,parts){ const b=$('#banner'); $('#bannerIcon').textContent=ico; $('#bannerTitle').textContent=title; $('#bannerText').innerHTML=parts.join(' • '); b.className='banner '+(cls||''); b.style.display='flex'; }
   function showTodayBanner(run){
@@ -528,13 +564,33 @@
     const dog   = data.filter(p=>!p.decede && p.type==='Chien' && ((new Date(p.naissance).getMonth()===d.getMonth() && new Date(p.naissance).getDate()===d.getDate()) || (new Date(p.naissance).getMonth()===1 && new Date(p.naissance).getDate()===29 && !isLeap(d.getFullYear()) && MD(d)==='2-1')));
     const memH  = data.filter(p=>p.decede && p.type!=='Chien' && p.deces && new Date(p.deces).getMonth()===d.getMonth() && new Date(p.deces).getDate()===d.getDate());
     const memD  = data.filter(p=>p.decede && p.type==='Chien' && p.deces && new Date(p.deces).getMonth()===d.getMonth() && new Date(p.deces).getDate()===d.getDate());
+
     if(!(human.length||dog.length||memH.length||memD.length)){ $('#banner').style.display='none'; return; }
-    const parts=[]; if(dog.length){ parts.push(`<strong>${listNames(dog)}</strong> — joyeux anniversaire !`); if(run){confetti(); if(soundOn()) Sound.play();}}
-    if(human.length){ parts.push(`<strong>${listNames(human)}</strong> — joyeux anniversaire !`); if(run){confetti(); if(soundOn()) Sound.play();}}
-    if(memD.length||memH.length){ parts.push(`🕯️ Souvenir pour <strong>${listNames(memD.concat(memH))}</strong>`); }
-    showBanner('', '🎉','Aujourd’hui',parts);
+
+    const parts=[]; let cls=''; 
+    if(dog.length){ parts.push(`<strong>${listNames(dog)}</strong> — joyeux anniversaire !`); if(run){confetti(); if(soundOn()) tryPlayAuto();}}
+    if(human.length){ parts.push(`<strong>${listNames(human)}</strong> — joyeux anniversaire !`); if(run){confetti(); if(soundOn()) tryPlayAuto();}}
+    if(memD.length||memH.length){ cls='mem'; parts.push(`🕯️ Souvenir pour <strong>${listNames(memD.concat(memH))}</strong>`); }
+    showBanner(cls, '🎉','Aujourd’hui',parts);
   }
   $('#closeBanner').addEventListener('click', ()=> $('#banner').style.display='none');
+
+  /* ——— Son auto : tentative immédiate + déverrouillage iPhone au 1er tap ——— */
+  function hasLiveBirthdayToday(){
+    const d=new Date(), MD=x=>`${x.getMonth()}-${x.getDate()}`;
+    for(const p of data){
+      if(p.decede) continue;
+      const b=new Date(p.naissance);
+      const sameMD = b.getMonth()===d.getMonth() && b.getDate()===d.getDate();
+      const feb29 = (b.getMonth()===1 && b.getDate()===29 && !isLeap(d.getFullYear()) && MD(d)==='2-1');
+      if(sameMD||feb29) return true;
+    }
+    return false;
+  }
+  function tryPlayAuto(){
+    try{ Sound.tryResume(); Sound.play(); }catch{}
+    Sound.unlockOnce();
+  }
 
   /* TABLEAU tri/recherche */
   let tSort={key:'nom',dir:1};
@@ -555,7 +611,13 @@
   }
 
   /* Événements globaux */
-  $('#celebrateBtn').addEventListener('click', confetti);
+  // Bouton Fêter => bannière + confettis + son (même sans anniv)
+  $('#celebrateBtn').addEventListener('click', ()=>{
+    confetti();
+    if(soundOn()) tryPlayAuto();
+    showBanner('', '🎉', 'Fêter', ['Juste pour le plaisir 🎊']);
+  });
+
   $('#testConfetti').addEventListener('click', confetti);
   $('#testBannerHuman').addEventListener('click', ()=> showBanner('', '🎉', 'Anniversaire', ['<strong>(exemple)</strong> — joyeux anniversaire !']));
   $('#testBannerDog').addEventListener('click', ()=> showBanner('', '🎉', 'Anniversaire (chien)', ['<strong>(exemple)</strong> — joyeux anniversaire !']));
@@ -571,7 +633,6 @@
     $('#tableView').style.display=isTable?'block':'none';
     const showMain = (!isSettings && !isTable);
     $('#kpi').style.display = showMain?'flex':'none';
-    $('#helpImport').style.display = showMain?'block':'none';
     $('#upcoming').style.display = showMain?'block':'none';
     $('#list').style.display = showMain?'block':'none';
     if(isTable) renderTable(); else if(!isSettings) render(false);
@@ -590,7 +651,6 @@
     $('#deleteBtn').style.display = p ? 'inline-flex' : 'none';
     $('#modal').style.display='block';
 
-    // attache l’auto-slash quand la modale est ouverte
     attachDateAutoSlash('#fNaissance, #fDeces');
   }
   function closeModal(){ $('#modal').style.display='none'; }
@@ -637,7 +697,14 @@
     ];
     save(data);
   }
+
+  // Premier rendu : true => vérifie anniversaires et lance bannière/confettis/son automatiquement
   render(true);
+
+  // Si un anniversaire vivant est présent aujourd'hui, tenter le son auto immédiatement
+  if (hasLiveBirthdayToday() && soundOn()){
+    tryPlayAuto();
+  }
 })();
 </script>
 </body>
