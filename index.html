@@ -419,7 +419,7 @@ function renderTable(){
       <td class="th-center">${fmtDateFr(p._next)}</td>
       <td class="th-num">${p._days}</td>
       <td class="th-center">${p.decede?'Oui':'Non'}</td>
-      <td>${p.deces?fmtDateFr(p.deces):'—'}</td>
+      <td>${p.deces ? `${fmtDateFr(p.deces)} <span class="small muted">(à ${ageOn(p.naissance, p.deces)} ans)</span>` : '—'}</td>
       <td class="th-center"><button class="secondary tiny" data-cmd="editRow" data-id="${p.id}">✏️</button></td>
     </tr>`).join('') || `<tr><td colspan="9" class="muted" style="padding:12px">R.A.S.</td></tr>`;
 
