@@ -59,7 +59,17 @@
   .tab{ padding:10px 14px; border-radius:999px; border:1px solid var(--line); background:#ffe08a; color:#2b1e00; font-weight:900; box-shadow:var(--btn-shadow); cursor:pointer }
   .tab.active{ background:var(--btn-grad); border-color:transparent }
 
-  .banner{ position:sticky; top:56px; z-index:60; display:none; gap:10px; align-items:center;
+  
+/* --- Compteurs totaux (humains / chiens) --- */
+.badges{ display:flex; gap:8px; align-items:center; margin-left:6px }
+.badgeWhite{
+  width:26px; height:26px; min-width:26px; border-radius:50%;
+  display:grid; place-items:center; font-weight:900;
+  background:#fff; color:#2b1e00;
+  border:1px solid rgba(0,0,0,.15); box-shadow:0 2px 6px rgba(0,0,0,.1);
+  font-size:13px;
+}
+.banner{ position:sticky; top:56px; z-index:60; display:none; gap:10px; align-items:center;
     padding:12px 14px; border:1px solid var(--line); border-radius:14px; margin:12px auto 0; max-width:1100px;
     background:linear-gradient(90deg,#22c55e,#86efac); color:#04220f }
   .banner.mem{ background:linear-gradient(90deg,#b0892a,#8b6a20); color:#fff }
@@ -109,6 +119,12 @@
       <div class="tab" data-filter="dog">Chiens</div>
       <div class="tab" data-filter="soon">Prochains (7j)</div>
       <div class="tab" data-filter="settings">Paramètres</div>
+<!-- Compteurs totaux -->
+<div class="badges">
+  <span id="humBadge" class="badgeWhite" title="Humains">0</span>
+  <span id="dogBadge" class="badgeWhite" title="Chiens">0</span>
+</div>
+
     </div>
   </div>
 </header>
@@ -531,7 +547,20 @@ window.AppUI = {
   clearAll(){ if(!confirm('Supprimer TOUTES les entrées ?')) return; if(!confirm('Confirmer la suppression définitive ?')) return; data=[]; save(data); renderAll(false); },
   onCsvChange: async (e)=>{ const f=e?.target?.files?.[0]; if(!f) return; const text=await f.text(); const p=parseCSV(text); pending=p; showPreview(p); e.target.value=''; },
   cancelImport(){ pending=null; $('#importDlg').style.display='none'; $('#importDlg').setAttribute('aria-hidden','true'); },
-  confirmImport(){ if(!pending) return; data = mergeByKey(data,pending.mapped); save(data); pending=null; $('#importDlg').style.display='none'; $('#importDlg').setAttribute('aria-hidden','true'); renderAll(true); },
+  confirmImport(){ if(!pending) return; data = mergeByKey(data,pending.mapped); save(data); pending=null; $('#importDlg').style.display='none'; $('#importDlg').setAttribute('aria-hidden','true'); 
+function updateBadges(){
+  var humans = 0, dogs = 0;
+  for (var i=0; i<data.length; i++){
+    if (data[i].type === 'Chien') dogs++;
+    else humans++;
+  }
+  var hb = document.getElementById('humBadge');
+  var db = document.getElementById('dogBadge');
+  if (hb) hb.textContent = humans;
+  if (db) db.textContent = dogs;
+}
+renderAll(true);
+updateBadges(); },
   hideBanner(){ $('#banner').style.display='none'; },
   testSound(){ if(soundOn()) Sound.play(); },
   testConfetti(){ confetti(); },
