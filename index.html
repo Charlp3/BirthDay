@@ -549,17 +549,6 @@ window.AppUI = {
   onCsvChange: async (e)=>{ const f=e?.target?.files?.[0]; if(!f) return; const text=await f.text(); const p=parseCSV(text); pending=p; showPreview(p); e.target.value=''; },
   cancelImport(){ pending=null; $('#importDlg').style.display='none'; $('#importDlg').setAttribute('aria-hidden','true'); },
   confirmImport(){ if(!pending) return; data = mergeByKey(data,pending.mapped); save(data); pending=null; $('#importDlg').style.display='none'; $('#importDlg').setAttribute('aria-hidden','true'); 
-function updateBadges(){
-  var humans = 0, dogs = 0;
-  for (var i=0; i<data.length; i++){
-    if (data[i].type === 'Chien') dogs++;
-    else humans++;
-  }
-  var hb = document.getElementById('humBadge');
-  var db = document.getElementById('dogBadge');
-  if (hb) hb.textContent = humans;
-  if (db) db.textContent = dogs;
-}
 renderAll(true);
 updateBadges(); },
   hideBanner(){ $('#banner').style.display='none'; },
@@ -633,6 +622,17 @@ if(data.length===0){
   save(data);
 }
 
+function updateBadges(){
+  var humans = 0, dogs = 0;
+  for (var i=0; i<data.length; i++){
+    if (data[i].type === 'Chien') dogs++;
+    else humans++;
+  }
+  var hb = document.getElementById('humBadge');
+  var db = document.getElementById('dogBadge');
+  if (hb) hb.textContent = humans;
+  if (db) db.textContent = dogs;
+}
 /* ======= Go ======= */
 renderAll(true);
 if (soundOn()){ Sound.unlockOnce(); if (hasLiveBirthdayToday()) { tryPlayAuto(); } }
