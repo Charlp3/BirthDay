@@ -438,6 +438,7 @@ function renderTable(){
       <td>${p.deces ? `${fmtDateFr(p.deces)} <span class="small muted">(à ${ageOn(p.naissance, p.deces)} ans)</span>` : '—'}</td>
       <td class="th-center"><button class="secondary tiny" data-cmd="editRow" data-id="${p.id}">✏️</button></td>
     </tr>`).join('') || `<tr><td colspan="9" class="muted" style="padding:12px">R.A.S.</td></tr>`;
+updateBadges();
 
   // maj flèches tri
   $$('#mainTable thead th .sort-ind').forEach(s=>s.textContent='');
