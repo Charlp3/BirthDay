@@ -465,18 +465,62 @@ function renderUpcoming(){ const s=soon(7);
 function listNames(arr){ const names=arr.map(p=>esc(p.nom)); return names.length<=2?names.join(' et '):names.slice(0,2).join(', ')+' et '+(names.length-2)+' autres'; }
 function showBanner(cls,ico,title,parts){ const b=$('#banner'); $('#bannerIcon').textContent=ico; $('#bannerTitle').textContent=title; $('#bannerText').innerHTML=parts.join(' • '); b.className='banner '+(cls||''); b.style.display='flex'; }
 function isTodayMD(dateObj){ const d=new Date(), x=new Date(dateObj); return d.getMonth()===x.getMonth() && d.getDate()===x.getDate(); }
-function showTodayBanner(run){
-  const d=new Date(), MD=x=>`${x.getMonth()}-${x.getDate()}`;
-  const human = data.filter(p=>!p.decede && p.type!=='Chien' && (isTodayMD(p.naissance) || (new Date(p.naissance).getMonth()===1 && new Date(p.naissance).getDate()===29 && !isLeap(d.getFullYear()) && MD(d)==='2-1')));
-  const dog   = data.filter(p=>!p.decede && p.type==='Chien' && (isTodayMD(p.naissance) || (new Date(p.naissance).getMonth()===1 && new Date(p.naissance).getDate()===29 && !isLeap(d.getFullYear()) && MD(d)==='2-1')));
-  const memH  = data.filter(p=>p.decede && p.type!=='Chien' && p.deces && isTodayMD(p.deces));
-  const memD  = data.filter(p=>p.decede && p.type==='Chien' && p.deces && isTodayMD(p.deces));
-  if(!(human.length||dog.length||memH.length||memD.length)){ $('#banner').style.display='none'; return; }
-  const parts=[]; let cls='';
-  if(dog.length){ parts.push(`<strong>${listNames(dog)}</strong> — joyeux anniversaire !`); if(run){confetti(); if(soundOn()) tryPlayAuto();}}
-  if(human.length){ parts.push(`<strong>${listNames(human)}</strong> — joyeux anniversaire !`); if(run){confetti(); if(soundOn()) tryPlayAuto();}}
-  if(memD.length||memH.length){ cls='mem'; parts.push(`🕯️ Souvenir (décès) pour <strong>${listNames(memD.concat(memH))}</strong>`); }
-  showBanner(cls, (cls==='mem'?'🕯️':'🎉'), (cls==='mem'?'Souvenir':'Aujourd’hui'), parts);
+// --- Détection de même jour/mois (corrige 29 février) ---
+function isTodayMonthDay(dateISO){
+  if(!dateISO) return false;
+  const d = new Date(dateISO);
+  if(isNaN(d)) return false;
+  const today = new Date();
+  // gérer les anniversaires du 29/02 les années non bissextiles → 01/03
+  const mdA = (d.getMonth()===1 && d.getDate()===29 && !(today.getFullYear()%4===0 && (today.getFullYear()%100!==0 || today.getFullYear()%400===0)))
+    ? {m:2,d:1}
+    : {m:d.getMonth(), d:d.getDate()};
+  return (today.getMonth()===mdA.m) && (today.getDate()===mdA.d);
+}
+
+// --- Affichage bannière du jour ---
+function showTodayBanner(forceShow=true){
+  const today = new Date();
+
+  // Séparation vivants / souvenirs
+  const liveHumans = data.filter(p => !p.decede && p.type!=='Chien' && isTodayMonthDay(p.naissance));
+  const liveDogs   = data.filter(p => !p.decede && p.type==='Chien'  && isTodayMonthDay(p.naissance));
+  const memHumans  = data.filter(p =>  p.decede && p.type!=='Chien' && p.deces && isTodayMonthDay(p.deces));
+  const memDogs    = data.filter(p =>  p.decede && p.type==='Chien'  && p.deces && isTodayMonthDay(p.deces));
+
+  const hasLive = liveHumans.length || liveDogs.length;
+  const hasMem  = memHumans.length  || memDogs.length;
+
+  const b = document.getElementById('banner');
+  if(!hasLive && !hasMem){ b.style.display='none'; return; }
+
+  const names = arr => {
+    const n = arr.map(p=>p.nom);
+    return n.length<=2 ? n.join(' et ') : `${n.slice(0,2).join(', ')} et ${n.length-2} autres`;
+  };
+
+  // --- Bannière Souvenir prioritaire ---
+  if(hasMem){
+    b.className = 'banner mem';
+    document.getElementById('bannerIcon').textContent = '🕯️';
+    document.getElementById('bannerTitle').textContent = 'Souvenir';
+    const parts = [];
+    if(memHumans.length) parts.push(`Humains : <strong>${names(memHumans)}</strong>`);
+    if(memDogs.length)   parts.push(`Chiens : <strong>${names(memDogs)}</strong>`);
+    document.getElementById('bannerText').innerHTML = parts.join(' • ');
+    b.style.display = 'flex';
+    return;
+  }
+
+  // --- Sinon bannière festive (vivants) ---
+  b.className = 'banner';
+  document.getElementById('bannerIcon').textContent = '🎉';
+  document.getElementById('bannerTitle').textContent = "Aujourd'hui";
+  const parts = [];
+  if(liveHumans.length) parts.push(`Humains : <strong>${names(liveHumans)}</strong> — joyeux anniversaire !`);
+  if(liveDogs.length)   parts.push(`Chiens : <strong>${names(liveDogs)}</strong> — joyeux anniversaire !`);
+  document.getElementById('bannerText').innerHTML = parts.join(' • ');
+  b.style.display = 'flex';
 }
 function hasLiveBirthdayToday(){ const d=new Date(), MD=x=>`${x.getMonth()}-${x.getDate()}`; for(const p of data){ if(p.decede) continue; const b=new Date(p.naissance); const same = b.getMonth()===d.getMonth() && b.getDate()===d.getDate(); const feb29=(b.getMonth()===1 && b.getDate()===29 && !isLeap(d.getFullYear()) && MD(d)==='2-1'); if(same||feb29) return true; } return false; }
 function tryPlayAuto(){ try{ Sound.tryResume?.(); Sound.play(); }catch{} Sound.unlockOnce?.(); }
