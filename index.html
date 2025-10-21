@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>BirthDay v3.7.4 — Anniversaires & souvenirs</title>
+<title>BirthDay v4.0 — Anniversaires & souvenirs</title>
 <style>
   :root{
     --y-50:#fff3bf; --y-100:#ffe08a; --y-200:#ffd166; --y-300:#f2c94c;
@@ -100,7 +100,7 @@
   <div class="wrap">
     <div class="title">
       <div class="logo" id="appLogo"><img id="logoImg" alt="logo"/></div>
-      <div class="brand">BirthDay <span class="ver">v3.7.4</span></div>
+      <div class="brand">BirthDay <span class="ver">v4.0</span></div>
       <div class="right">
         <span class="topDate" id="todayTxt">01-01-1970</span>
         <input id="search" placeholder="Rechercher un nom…"/>
@@ -117,7 +117,7 @@
       <div class="tab" data-filter="alive">Vivants</div>
       <div class="tab" data-filter="dead">Décédés</div>
       <div class="tab" data-filter="dog">Chiens</div>
-      <div class="tab" data-filter="soon">Prochains (7j)</div>
+      <div class="tab" data-filter="soon">Prochains (30j)</div>
       <div class="tab" data-filter="settings">Paramètres</div>
 <!-- Compteurs totaux -->
 <div class="badges">
@@ -162,7 +162,7 @@
   </section>
 
   <section id="upcomingCard" class="card" style="margin-top:16px; display:none">
-    <div class="small muted">Prochains anniversaires dans 7 jours (R.A.S. si vide)</div>
+    <div class="small muted">Prochains anniversaires dans 30 jours (R.A.S. si vide)</div>
     <div id="upcomingList" style="padding-top:8px"></div>
   </section>
 
@@ -455,10 +455,42 @@ document.querySelector('#mainTable thead').addEventListener('click', (e)=>{
   renderTable();
 });
 
-/* ======= Prochains 7j ======= */
-function soon(n){ const now=new Date(); return data.map(p=>({p,next:nextBirthday(p.naissance,now)})).map(x=>({...x,days:daysBetween(now,x.next)})).filter(x=>x.days<=n).sort((a,b)=>a.days-b.days); }
-function renderUpcoming(){ const s=soon(7);
-  $('#upcomingList').innerHTML = s.map(x=>{ const p=x.p; const note=p.decede? '†' : ''; return `<div class="small" style="padding:6px 0;border-bottom:1px dashed var(--line)"><strong>${esc(p.nom)}</strong> ${p.type==='Chien'?'🐶':''} — ${fmtDateFr(nextBirthday(p.naissance))} <span class="muted">(${x.days} j)</span> ${note}</div>`; }).join('') || `<div class="muted">R.A.S.</div>`;
+/* ======= Prochains 30j ======= */
+/* ======= Prochains 30j ======= */
+function renderUpcoming(){
+  const now = new Date();
+  const events = [];
+
+  // Anniversaires (humains + chiens, vivants + décédés)
+  for (const p of data){
+    if (p.naissance){
+      const nextBD = nextBirthday(p.naissance, now);
+      const d = daysBetween(now, nextBD);
+      if (d >= 0 && d <= 30) events.push({ who:p, kind:'anniv', next:nextBD, days:d });
+    }
+    // Souvenirs (seulement si décédé + date de décès connue)
+    if (p.decede && p.deces){
+      const nextMem = nextBirthday(p.deces, now);
+      const d2 = daysBetween(now, nextMem);
+      if (d2 >= 0 && d2 <= 30) events.push({ who:p, kind:'mem', next:nextMem, days:d2 });
+    }
+  }
+
+  events.sort((a,b)=> a.days - b.days);
+
+  $('#upcomingList').innerHTML = events.map(e=>{
+    const p = e.who;
+    const ico = e.kind==='mem' ? '🕯️' : '🎉';
+    const type = p.type==='Chien' ? '🐶' : '';
+    const cross = p.decede ? '†' : '';
+    const when = e.days===0 ? "aujourd’hui" : `dans ${e.days} j`;
+    return `
+      <div class="small" style="padding:6px 0;border-bottom:1px dashed var(--line)">
+        ${ico} <strong>${esc(p.nom)}</strong> ${type} ${cross}
+        — ${fmtDateFr(e.next)} <span class="muted">(${when})</span>
+      </div>
+    `;
+  }).join('') || `<div class="muted" style="padding:8px">R.A.S.</div>`;
 }
 
 /* ======= Bannières ======= */
@@ -529,14 +561,26 @@ function tryPlayAuto(){ try{ Sound.tryResume?.(); Sound.play(); }catch{} Sound.u
 /* ======= Tabs & Search ======= */
 $('#search').addEventListener('input', ()=> renderAll(false));
 $('#tabs').addEventListener('click', e=>{
-  const t=e.target.closest('.tab'); if(!t) return;
-  $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); filter=t.dataset.filter;
-  const isSettings=filter==='settings', isSoon=filter==='soon';
-  $('#settings').style.display=isSettings?'block':'none';
-  $('#upcomingCard').style.display=isSoon?'block':'none';
-  $('#tableCard').style.display=!isSettings?'block':'none';
-  $('#kpi').style.display = !isSettings?'block':'none';
-  if(isSoon) renderUpcoming();
+  const t = e.target.closest('.tab');
+  if (!t) return;
+
+  $$('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  filter = t.dataset.filter;
+
+  const isSettings = filter === 'settings';
+  const isSoon     = filter === 'soon';
+
+  $('#settings').style.display     = isSettings ? 'block' : 'none';
+  $('#upcomingCard').style.display = isSoon     ? 'block' : 'none';
+  $('#tableCard').style.display    = (!isSettings && !isSoon) ? 'block' : 'none';
+  $('#kpi').style.display          = (!isSettings && !isSoon) ? 'block' : 'none';
+
+  if (isSoon) {
+    renderUpcoming();
+    return; // empêche d'appeler renderAll quand on est sur Prochains
+  }
+
   renderAll(false);
 });
 
