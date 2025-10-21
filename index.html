@@ -521,6 +521,7 @@ function showTodayBanner(forceShow=true){
   if(liveDogs.length)   parts.push(`Chiens : <strong>${names(liveDogs)}</strong> — joyeux anniversaire !`);
   document.getElementById('bannerText').innerHTML = parts.join(' • ');
   b.style.display = 'flex';
+if(forceShow){ confetti(); if(soundOn()) tryPlayAuto(); }
 }
 function hasLiveBirthdayToday(){ const d=new Date(), MD=x=>`${x.getMonth()}-${x.getDate()}`; for(const p of data){ if(p.decede) continue; const b=new Date(p.naissance); const same = b.getMonth()===d.getMonth() && b.getDate()===d.getDate(); const feb29=(b.getMonth()===1 && b.getDate()===29 && !isLeap(d.getFullYear()) && MD(d)==='2-1'); if(same||feb29) return true; } return false; }
 function tryPlayAuto(){ try{ Sound.tryResume?.(); Sound.play(); }catch{} Sound.unlockOnce?.(); }
