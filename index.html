@@ -429,7 +429,7 @@ function renderTable(){
   });
   $('#tableBody').innerHTML = arr.map(p=>`<tr data-id="${p.id}">
       <td>${esc(p.nom)}${p.type==='Chien'?' 🐾':''}</td>
-      <td>${p.type==='Chien'?'🐶':'Humain'}</td>
+      <td style="text-align:center">${p.type==='Chien'?'🐕':'👤'}</td>
       <td>${fmtDateFr(p.naissance)}</td>
       <td class="th-num">${p.decede ? `<span title="aurait aujourd’hui">${p._age}</span> <span class="small muted">aurait</span>` : p._age}</td>
       <td class="th-center">${fmtDateFr(p._next)}</td>
