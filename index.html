@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>BirthDay v4.0 — Anniversaires & souvenirs</title>
+<title>BirthDay v4.1 — Anniversaires & souvenirs</title>
 <style>
   :root{
     --y-50:#fff3bf; --y-100:#ffe08a; --y-200:#ffd166; --y-300:#f2c94c;
@@ -100,7 +100,7 @@
   <div class="wrap">
     <div class="title">
       <div class="logo" id="appLogo"><img id="logoImg" alt="logo"/></div>
-      <div class="brand">BirthDay <span class="ver">v4.0</span></div>
+      <div class="brand">BirthDay <span class="ver">v4.1</span></div>
       <div class="right">
         <span class="topDate" id="todayTxt">01-01-1970</span>
         <input id="search" placeholder="Rechercher un nom…"/>
@@ -441,7 +441,7 @@ function renderTable(){
   });
   $('#tableBody').innerHTML = arr.map(p=>`<tr data-id="${p.id}">
       <td>${esc(p.nom)}${p.type==='Chien'?' 🐾':''}</td>
-      <td style="text-align:center">${p.type==='Chien'?'🐶':'👤'}</td>
+      <td style="text-align:center">${p.type==='Chien'?'🐕':'👤'}</td>
       <td>${fmtDateFr(p.naissance)}</td>
       <td class="th-num">${p.decede ? `<span title="aurait aujourd’hui">${p._age}</span> <span class="small muted">aurait</span>` : p._age}</td>
       <td class="th-center">${fmtDateFr(p._next)}</td>
