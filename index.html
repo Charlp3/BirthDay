@@ -326,21 +326,33 @@ const soundOn = ()=> localStorage.getItem(SOUND)!=='off';
 
 /* ======= Confettis (25s) ======= */
 function confetti(){
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const D=25000, c=document.createElement('canvas');
-  Object.assign(c.style,{position:'fixed',inset:0,pointerEvents:'none',zIndex:9999}); document.body.appendChild(c);
-  const ctx=c.getContext('2d'), DPR=Math.max(1,devicePixelRatio||1);
-  const colors=['#f59e0b','#fbbf24','#fde68a','#86efac','#60a5fa','#f472b6','#a78bfa'];
-  const N=70, g=.012*DPR; const t0=performance.now();
-  const parts=[...Array(N)].map((_,i)=>({shape:['rect','circle','tri'][Math.floor(Math.random()*3)], x:Math.random()*innerWidth*DPR, y:-Math.random()*innerHeight*.4*DPR, vx:(Math.random()-.5)*.24*DPR, vy:Math.random()*.16*DPR, w:(3.2+Math.random()*3.2)*DPR, h:(3.2+Math.random()*3.2)*1.2*DPR, r:Math.random()*Math.PI, vr:(Math.random()-.5)*.018, col:colors[i%colors.length], drift:Math.random()*2*Math.PI }));
-  const resize=()=>{ c.width=innerWidth*DPR; c.height=innerHeight*DPR }; resize(); addEventListener('resize',resize,{once:true});
-  (function loop(t){ const el=t-t0; ctx.clearRect(0,0,c.width,c.height);
-    for(const p of parts){ p.vy+=g; p.y+=p.vy; p.x+=p.vx+Math.sin((el/1300)+p.drift)*.45*DPR; p.r+=p.vr; if(p.y>c.height+35*DPR){ p.y=-25*DPR; p.vy=Math.random()*.18*DPR; }
-      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.col; if(el>D-1500) ctx.globalAlpha=Math.max(0,(D-el)/1500);
-      if(p.shape==='rect') ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); else if(p.shape==='circle'){ ctx.beginPath(); ctx.arc(0,0,p.w/1.5,0,Math.PI*2); ctx.fill(); } else { ctx.beginPath(); ctx.moveTo(-p.w/2,p.h/2); ctx.lineTo(0,-p.h/2); ctx.lineTo(p.w/2,p.h/2); ctx.closePath(); ctx.fill(); }
-      ctx.restore(); ctx.globalAlpha=1;
-    } if(el<D) requestAnimationFrame(loop); else c.remove();
-  })(t0);
+  const body = document.body;
+  const n = 20; // nombre total de cartes
+  const symbols = ['♠️','♥️','♦️','♣️']; // les 4 couleurs de cartes
+  for(let i = 0; i < n; i++){
+    const card = document.createElement('div');
+    card.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    card.style.position = 'fixed';
+    card.style.left = Math.random() * 100 + 'vw';
+    card.style.top = (Math.random() * -300) + 'px';
+    card.style.fontSize = (22 + Math.random() * 20) + 'px';
+    card.style.opacity = 0.9;
+    card.style.transition = 'transform 11s linear, opacity 11s linear';
+    card.style.zIndex = 9999;
+    body.appendChild(card);
+
+    // chute dispersée et rotation aléatoire
+    setTimeout(() => {
+      const drift = (Math.random() - 0.5) * 400;  // dispersion horizontale
+      const fall = window.innerHeight + 120;
+      const spin = (Math.random() - 0.5) * 720;  // rotation aléatoire
+      card.style.transform = `translate(${drift}px, ${fall}px) rotate(${spin}deg)`;
+      card.style.opacity = 0;
+    }, Math.random() * 1500); // départs étalés sur 1,5s
+
+    // suppression après animation
+    setTimeout(() => card.remove(), 12000);
+  }
 }
 
 /* ======= Logo persistant ======= */
@@ -429,7 +441,7 @@ function renderTable(){
   });
   $('#tableBody').innerHTML = arr.map(p=>`<tr data-id="${p.id}">
       <td>${esc(p.nom)}${p.type==='Chien'?' 🐾':''}</td>
-      <td style="text-align:center">${p.type==='Chien'?'🐕':'👤'}</td>
+      <td style="text-align:center">${p.type==='Chien'?'🐶':'👤'}</td>
       <td>${fmtDateFr(p.naissance)}</td>
       <td class="th-num">${p.decede ? `<span title="aurait aujourd’hui">${p._age}</span> <span class="small muted">aurait</span>` : p._age}</td>
       <td class="th-center">${fmtDateFr(p._next)}</td>
