@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>BirthDay v4.1 — Anniversaires & souvenirs</title>
+<title>BirthDay v4.2 — Anniversaires & souvenirs</title>
 <style>
   :root{
     --y-50:#fff3bf; --y-100:#ffe08a; --y-200:#ffd166; --y-300:#f2c94c;
@@ -100,7 +100,7 @@
   <div class="wrap">
     <div class="title">
       <div class="logo" id="appLogo"><img id="logoImg" alt="logo"/></div>
-      <div class="brand">BirthDay <span class="ver">v4.1</span></div>
+      <div class="brand">BirthDay <span class="ver">v4.2</span></div>
       <div class="right">
         <span class="topDate" id="todayTxt">01-01-1970</span>
         <input id="search" placeholder="Rechercher un nom…"/>
@@ -175,6 +175,7 @@
       <label><input id="soundToggle" type="checkbox" style="accent-color:#28a745" checked/> Activer</label>
       <button class="secondary tiny" data-cmd="testSound">Tester son</button>
       <button class="secondary tiny" data-cmd="testConfetti">Tester confettis</button>
+<button id="exportCsvBtn">Sauvegarder CSV</button>
     </div>
 
     <div class="flex" style="gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
@@ -734,6 +735,47 @@ function updateBadges(){
   if (hb) hb.textContent = humans;
   if (db) db.textContent = dogs;
 }
+// ====== Exportation CSV avec choix d’emplacement ======
+document.getElementById('exportCsvBtn').addEventListener('click', async ()=>{
+  try {
+    const data = JSON.parse(localStorage.getItem('birthday_famille_v1') || '[]');
+    if (!data.length) {
+      alert("Aucune donnée à sauvegarder !");
+      return;
+    }
+
+    // construire le contenu CSV
+    const headers = Object.keys(data[0]);
+    const rows = data.map(obj => headers.map(h => `"${(obj[h] ?? '').toString().replace(/"/g, '""')}"`).join(','));
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const fileName = `BirthDay-${new Date().toISOString().slice(0,10)}.csv`;
+
+    // --- ✅ Tenter le File System Access API (choix dossier) ---
+    if (window.showSaveFilePicker) {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [{ description: 'Fichier CSV', accept: { 'text/csv': ['.csv'] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(csvContent);
+      await writable.close();
+      alert("✅ Sauvegarde terminée !");
+    } else {
+      // --- 🌐 Fallback : téléchargement automatique classique ---
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      alert("✅ Fichier CSV téléchargé !");
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Erreur pendant la sauvegarde CSV.");
+  }
+});
 /* ======= Go ======= */
 renderAll(true);
 if (soundOn()){ Sound.unlockOnce(); if (hasLiveBirthdayToday()) { tryPlayAuto(); } }
