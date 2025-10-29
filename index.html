@@ -2,258 +2,742 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>BirthDay v4.5</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>BirthDay v4.1 — Anniversaires & souvenirs</title>
 <style>
-:root{
-  --fond:#fdf4dd;
-  --banniere-vivant:#f7c9d6;
-  --banniere-mort:#d6caef;
-  --texte:#3b2e07;
-  --btn1:#f1c55b;
-  --btn2:#de8b2a;
-}
-body{
-  font-family:system-ui,-apple-system,Segoe UI,Roboto;
-  background:var(--fond);
-  color:var(--texte);
-  margin:0;
-}
-header{
-  background:#f1c55b;
-  padding:8px;
-  display:flex;
-  justify-content:space-between;
-  flex-wrap:wrap;
-  align-items:center;
-}
-header span{
-  font-weight:700;
-}
-button{
-  background:linear-gradient(135deg,var(--btn1),var(--btn2));
-  border:none;
-  border-radius:10px;
-  padding:6px 12px;
-  font-weight:600;
-  color:#2b1e00;
-  box-shadow:0 2px 4px rgba(0,0,0,.2);
-}
-.banner{
-  display:none;
-  margin:10px;
-  padding:10px;
-  border-radius:12px;
-  font-weight:600;
-  text-align:center;
-}
-.banner.vivant{background:var(--banniere-vivant);}
-.banner.mort{background:var(--banniere-mort);}
-main{
-  padding:10px;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#fffef6;
-  border-radius:10px;
-  overflow:hidden;
-}
-th,td{
-  border-bottom:1px solid rgba(0,0,0,.1);
-  padding:6px 8px;
-  font-size:14px;
-}
-th{background:#fff0b2;}
-tr:nth-child(even){background:#fffaf0;}
-.badge{
-  background:#fff;
-  border:1px solid rgba(0,0,0,.2);
-  border-radius:50%;
-  width:22px;height:22px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
+  :root{
+    --y-50:#fff3bf; --y-100:#ffe08a; --y-200:#ffd166; --y-300:#f2c94c;
+    --o-600:#d97706; --o-700:#b45309;
+    --bg:linear-gradient(180deg,#fff3bf 0%, #ffe08a 50%, #ffd166 100%);
+    --bg-header:linear-gradient(180deg,#ffd166,#f2c94c);
+    --card:#fff3bf; --field:#ffe08a; --line:rgba(0,0,0,.15);
+    --text:#2b1e00; --muted:#6b4c0f;
+    --btn-grad:linear-gradient(135deg,#f2c94c,#d97706);
+    --btn-shadow:0 10px 24px rgba(217,119,6,.35);
+    --shadow-soft:0 2px 10px rgba(0,0,0,.08);
+  }
+  html{ -webkit-text-size-adjust:100% }
+  *,*::before,*::after{ box-sizing:border-box }
+  html,body{ height:100% }
+  body{
+    margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial;
+    font-size:clamp(16px,2.7vw,18px); line-height:1.35;
+    color:var(--text); background:var(--bg); background-attachment:fixed;
+  }
+
+  header{ position:sticky; top:0; z-index:70; background:var(--bg-header); border-bottom:1px solid var(--line) }
+  .wrap{ max-width:1100px; margin:auto; padding:12px clamp(12px,3vw,24px) }
+  .title{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; color:#2b1e00 }
+  .logo{ width:36px; height:36px; border-radius:8px; overflow:hidden; display:grid; place-items:center; background:var(--btn-grad); box-shadow:var(--shadow-soft) }
+  .logo img{ width:100%; height:100%; object-fit:cover; display:none }
+  .brand{ display:flex; align-items:center; gap:8px; font-weight:900; font-size:clamp(18px,3.1vw,22px) }
+  .ver{ font-weight:900; color:#2b1e00; background:rgba(0,0,0,.06); padding:2px 8px; border-radius:999px }
+  .right{ margin-left:auto; display:flex; gap:10px; align-items:center; flex-wrap:wrap; pointer-events:auto }
+  .topDate{ font-weight:900; color:var(--o-700) }
+
+  input,select,textarea{
+    background:var(--field); border:1px solid var(--line); color:var(--text);
+    padding:10px 12px; border-radius:10px; outline:none; min-width:0;
+  }
+  input::placeholder{ color:var(--muted) }
+  #search{ width:clamp(180px,32vw,320px) }
+
+  button,.btn{
+    appearance:none; -webkit-appearance:none;
+    background:var(--btn-grad); color:#2b1e00; border:none;
+    padding:10px 14px; border-radius:12px; font-weight:900; cursor:pointer;
+    box-shadow:var(--btn-shadow); line-height:1.2; display:inline-flex; align-items:center; gap:.5ch;
+    transition:.2s transform,.2s box-shadow,.2s opacity;
+  }
+  button:hover{ box-shadow:0 12px 28px rgba(0,0,0,.12) }
+  button.secondary{ background:linear-gradient(135deg,#ffe08a,#f2c94c); border:1px solid rgba(0,0,0,.08) }
+  button.ghost{ background:transparent; border:2px dashed var(--o-600); box-shadow:none }
+  button.tiny{ padding:6px 8px; border-radius:8px }
+  button:active{ transform:translateY(1px) }
+
+  .tabs{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px }
+  .tab{ padding:10px 14px; border-radius:999px; border:1px solid var(--line); background:#ffe08a; color:#2b1e00; font-weight:900; box-shadow:var(--btn-shadow); cursor:pointer }
+  .tab.active{ background:var(--btn-grad); border-color:transparent }
+
+  
+/* --- Compteurs totaux (humains / chiens) --- */
+.badges{ display:flex; gap:8px; align-items:center; margin-left:6px }
+.badgeWhite{
+  width:26px; height:26px; min-width:26px; border-radius:50%;
+  display:grid; place-items:center; font-weight:900;
+  background:#fff; color:#2b1e00;
+  border:1px solid rgba(0,0,0,.15); box-shadow:0 2px 6px rgba(0,0,0,.1);
   font-size:13px;
-  font-weight:700;
-  margin-left:4px;
 }
-#bannerText strong{color:#000;}
-footer{
-  font-size:12px;
-  text-align:center;
-  margin:20px 0;
-  color:#555;
-}
+.banner{ position:sticky; top:56px; z-index:60; display:none; gap:10px; align-items:center;
+    padding:12px 14px; border:1px solid var(--line); border-radius:14px; margin:12px auto 0; max-width:1100px;
+    background:linear-gradient(90deg,#22c55e,#86efac); color:#04220f }
+  .banner.mem{ background:linear-gradient(90deg,#b0892a,#8b6a20); color:#fff }
+
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; box-shadow:var(--shadow-soft) }
+
+  table.table{ width:100%; border-collapse:separate; border-spacing:0; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden }
+  .table thead th{ position:sticky; top:0; background:#ffe08a; color:#2b1e00; text-align:left; padding:10px 12px; cursor:pointer; user-select:none; font-weight:900; white-space:nowrap }
+  .table tbody td{ padding:10px 12px; border-top:1px solid var(--line); vertical-align:middle }
+  .th-num{ text-align:right }
+  .th-center{ text-align:center }
+  .sort-ind{ margin-left:6px; opacity:.9 }
+  .muted{ color:var(--muted) } .small{ font-size:clamp(12px,2.5vw,13px) }
+
+  .overlay{ position:fixed; inset:0; display:none; background:rgba(0,0,0,.35); z-index:80 }
+  .modal{ max-width:420px; margin:8vh auto; padding:0; overflow:hidden }
+  .modal .headbar{ display:flex; align-items:center; gap:8px; padding:8px 12px; border-bottom:1px solid var(--line); background:#ffe08a }
+  .modal .body{ padding:12px; background:var(--card) }
+  .modal .body input,
+  .modal .body select{ font-size:1.15em; padding:12px 14px }
+  .modal .body button{ font-size:1.1em; padding:12px 16px }
+
+  .footer{ opacity:.8; text-align:center; padding:24px; color:#4a3b00 }
 </style>
 </head>
-
 <body>
 <header>
-  <div>
-    <span>🎂 BirthDay v4.5</span>
-    <span id="today"></span>
-  </div>
-  <div>
-    👤<span class="badge" id="humBadge">0</span>
-    🐕<span class="badge" id="dogBadge">0</span>
-    <button id="btnExport">Sauvegarder CSV</button>
-    <input type="file" id="btnImport" accept=".csv" style="display:none"/>
-    <button id="btnImportShow">Importer CSV</button>
+  <div class="wrap">
+    <div class="title">
+      <div class="logo" id="appLogo"><img id="logoImg" alt="logo"/></div>
+      <div class="brand">BirthDay <span class="ver">v4.1</span></div>
+      <div class="right">
+        <span class="topDate" id="todayTxt">01-01-1970</span>
+        <input id="search" placeholder="Rechercher un nom…"/>
+        <button class="secondary" data-cmd="celebrate">🎊 Fêter</button>
+        <label class="btn" for="csvInput">Importer CSV</label>
+        <input id="csvInput" type="file" accept=".csv,text/csv" style="display:none"/>
+        <button class="secondary" data-cmd="clearAll">Effacer toute la liste</button>
+        <button class="ghost" data-cmd="openAdd">+ Ajouter</button>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-filter="all">Tableau</div>
+      <div class="tab" data-filter="alive">Vivants</div>
+      <div class="tab" data-filter="dead">Décédés</div>
+      <div class="tab" data-filter="dog">Chiens</div>
+      <div class="tab" data-filter="soon">Prochains (30j)</div>
+      <div class="tab" data-filter="settings">Paramètres</div>
+<!-- Compteurs totaux -->
+<div class="badges">
+  <span id="humBadge" class="badgeWhite" title="Humains">0</span>
+  <span id="dogBadge" class="badgeWhite" title="Chiens">0</span>
+</div>
+
+    </div>
   </div>
 </header>
 
-<div id="banner" class="banner"></div>
+<!-- Bannière -->
+<div id="banner" class="banner">
+  <strong id="bannerIcon">🎉</strong> <span id="bannerTitle"></span> — <span id="bannerText"></span>
+  <span class="rightline"><button class="tiny" data-cmd="hideBanner">✖</button></span>
+</div>
 
-<main>
-<table id="table">
-  <thead>
-    <tr>
-      <th>Nom</th><th>Type</th><th>Naissance</th><th>Âge</th>
-      <th>Décès</th><th>Âge au décès</th><th>Notes</th>
-    </tr>
-  </thead>
-  <tbody id="tbody"></tbody>
-</table>
+<main class="wrap">
+  <section class="card" id="kpi">
+    <div class="small muted">Astuce : clique un en-tête pour trier (↑/↓). Par défaut : **anniversaire le plus proche**.</div>
+  </section>
+
+  <section id="tableCard" class="card" style="margin-top:12px">
+    <div style="max-width:100%; overflow:auto">
+      <table class="table" id="mainTable" aria-label="Anniversaires">
+        <thead>
+          <tr>
+            <th data-key="nom">Nom <span class="sort-ind"></span></th>
+            <th data-key="type">Type <span class="sort-ind"></span></th>
+            <th data-key="naissance">Naissance <span class="sort-ind"></span></th>
+            <th data-key="age" class="th-num">Âge <span class="sort-ind"></span></th>
+            <th data-key="next" class="th-center">Prochain <span class="sort-ind"></span></th>
+            <th data-key="days" class="th-num">J- <span class="sort-ind"></span></th>
+            <th data-key="decede" class="th-center">Décédé <span class="sort-ind"></span></th>
+            <th data-key="deces">Décès <span class="sort-ind"></span></th>
+            <th class="th-center">✏️</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="upcomingCard" class="card" style="margin-top:16px; display:none">
+    <div class="small muted">Prochains anniversaires dans 30 jours (R.A.S. si vide)</div>
+    <div id="upcomingList" style="padding-top:8px"></div>
+  </section>
+
+  <section id="settings" class="card" style="margin-top:16px; display:none">
+    <h3 style="margin:0 0 10px">Paramètres</h3>
+    <div class="small muted" style="margin-bottom:8px">Sons le jour J, confettis, et bannière.</div>
+
+    <div class="flex" style="gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <label class="small muted">Sons (anniversaires vivants)</label>
+      <label><input id="soundToggle" type="checkbox" style="accent-color:#28a745" checked/> Activer</label>
+      <button class="secondary tiny" data-cmd="testSound">Tester son</button>
+      <button class="secondary tiny" data-cmd="testConfetti">Tester confettis</button>
+    </div>
+
+    <div class="flex" style="gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <label class="small muted">Tests bannières</label>
+      <button class="secondary tiny" data-cmd="testLiveBanner">Tester bannière (vivants)</button>
+      <button class="secondary tiny" data-cmd="testMemBanner">Tester bannière (souvenir)</button>
+    </div>
+
+    <div class="card" style="margin-top:8px">
+      <div class="small muted">CSV attendu : <code>Nom;DateNaissance;Décédé;DateDécès;Type;Notes</code> (JJ/MM/AAAA). Un aperçu s’affichera avant confirmation.</div>
+    </div>
+
+    <div class="flex" style="gap:12px;flex-wrap:wrap;align-items:center;margin-top:10px">
+      <label class="small muted">Logo de l’appli</label>
+      <input id="logoPicker" type="file" accept="image/*"/>
+      <button class="secondary tiny" data-cmd="resetLogo">Réinitialiser</button>
+      <div class="small muted">Le logo est redimensionné (256×256) et mémorisé localement.</div>
+    </div>
+  </section>
+
+  <div class="footer small">
+    © Pierre Charlier-2025 • Local & privé • BirthDay 🎂 • Format JJ/MM/AAAA ✔️
+  </div>
 </main>
 
-<footer>
-© Pierre Charlier 2025 · Local & privé · BirthDay 🎂 · Format JJ/MM/AAAA
-</footer>
+<!-- Modal PERSONNE -->
+<div id="modal" class="overlay" aria-hidden="true">
+  <div class="card modal">
+    <div class="headbar">
+      <h3 id="modalTitle" style="margin:0;flex:1">Nouvelle entrée</h3>
+      <button class="secondary tiny" data-cmd="closeModal">Fermer</button>
+    </div>
+    <div class="body">
+      <div class="flex" style="gap:10px;flex-wrap:wrap">
+        <input id="fNom" placeholder="Nom" style="flex:1 1 220px" required/>
+        <select id="fType" style="flex:1 1 120px"><option>Humain</option><option>Chien</option></select>
+      </div>
+      <div class="flex" style="gap:10px;margin-top:10px;flex-wrap:wrap">
+        <div style="flex:1 1 160px">
+          <label class="small muted">Naissance (JJ/MM/AAAA)</label>
+          <input id="fNaissance" inputmode="numeric" placeholder="JJ/MM/AAAA" />
+        </div>
+        <div style="flex:1 1 120px">
+          <label class="small muted">Décédé ?</label>
+          <select id="fDecede"><option>Non</option><option>Oui</option></select>
+        </div>
+        <div style="flex:1 1 160px">
+          <label class="small muted">Date de décès (JJ/MM/AAAA)</label>
+          <input id="fDeces" inputmode="numeric" placeholder="JJ/MM/AAAA" />
+        </div>
+      </div>
+      <input id="fNotes" placeholder="Notes (optionnel)" style="margin-top:10px;width:100%"/>
+      <div class="flex" style="margin-top:10px">
+        <button data-cmd="save">Enregistrer</button>
+        <button class="secondary" type="button" data-cmd="delete">Supprimer</button>
+      </div>
+      <input type="hidden" id="fId" />
+    </div>
+  </div>
+</div>
+
+<!-- Modal IMPORT -->
+<div id="importDlg" class="overlay" aria-hidden="true">
+  <div class="card modal" style="max-width:720px">
+    <div class="headbar">
+      <h3 style="margin:0;flex:1">Aperçu d’import CSV</h3>
+      <button class="secondary tiny" data-cmd="cancelImport">Annuler</button>
+    </div>
+    <div class="body">
+      <div id="csvPreview" style="max-height:50vh;overflow:auto;border:1px solid var(--line);border-radius:10px"></div>
+      <div class="flex" style="margin-top:10px">
+        <div class="small muted" id="csvStats"></div>
+        <div class="rightline"><button data-cmd="confirmImport">Importer</button></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
-const KEY="birthday_famille_v1";
+(() => {
+/* ======= Utilitaires DOM ======= */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
 
-/* === utilitaires === */
-function fmtDateFr(d){
-  if(!d)return"";
-  if(/^\d{2}\/\d{2}\/\d{4}$/.test(d))return d;
-  const o=new Date(d);
-  if(isNaN(o))return"";
-  return String(o.getDate()).padStart(2,"0")+"/"+String(o.getMonth()+1).padStart(2,"0")+"/"+o.getFullYear();
-}
-function toISO(d){
-  if(!d)return"";
-  if(/^\d{4}-\d{2}-\d{2}$/.test(d))return d;
-  const m=d.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if(m)return`${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
-  return"";
-}
-function ageAt(birth,ref){
-  const b=new Date(birth);
-  if(isNaN(b))return"";
-  const r=ref?new Date(ref):new Date();
-  let y=r.getFullYear()-b.getFullYear();
-  const m=r.getMonth()-b.getMonth();
-  const d=r.getDate()-b.getDate();
-  if(m<0||(m===0&&d<0))y--;
-  return y;
-}
+/* ======= Constantes stockage ======= */
+const STORE='birthday_famille_v1';
+const SOUND='birthday_sounds';
+const LOGO='birthday_logo';
 
-/* === données === */
-function load(){
-  try{return JSON.parse(localStorage.getItem(KEY)||"[]");}
-  catch(e){return[];}
-}
-function save(arr){
-  localStorage.setItem(KEY,JSON.stringify(arr));
-}
+/* ======= Date en haut ======= */
+const today = new Date();
+$('#todayTxt').textContent = today.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}).replaceAll('/','-');
 
-/* === rendu === */
-function render(){
-  const arr=load();
-  const tb=document.getElementById("tbody");
-  tb.innerHTML="";
-  let h=0,d=0;
-  arr.forEach(p=>{
-    const tr=document.createElement("tr");
-    if(p.decede)tr.style.opacity=.7;
-    tr.innerHTML=`<td>${p.nom}</td>
-    <td>${p.type==="Chien"?"🐕":"👤"}</td>
-    <td>${fmtDateFr(p.naissance)}</td>
-    <td>${ageAt(p.naissance,"")||""}</td>
-    <td>${p.decede?fmtDateFr(p.deces):""}</td>
-    <td>${p.decede?ageAt(p.naissance,p.deces):""}</td>
-    <td>${p.notes||""}</td>`;
-    tb.appendChild(tr);
-    if(p.type==="Chien")d++;else h++;
-  });
-  document.getElementById("humBadge").textContent=h;
-  document.getElementById("dogBadge").textContent=d;
+/* ======= Helpers dates & format ======= */
+const stripTime = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const isLeap = y => (y%4===0 && (y%100!==0 || y%400===0));
+const daysBetween = (a,b)=> Math.round((stripTime(b)-stripTime(a))/(1000*60*60*24));
+const fmtDateFr = d => new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+const fmtDateISO = d => new Date(d).toISOString().slice(0,10);
+const esc = s => (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]));
+function toISO(s){
+  if(!s) return '';
+  s = String(s).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+  if(m){ let [_,d,mo,y]=m; const yy=(y.length===2?('20'+y):y).padStart(4,'0'); return `${yy}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`; }
+  const dt = new Date(s); if(!isNaN(dt)) return fmtDateISO(dt);
+  return '';
 }
-
-/* === export CSV === */
-function exportCSV(){
-  const data=load();
-  if(!data.length){alert("Aucune donnée à sauvegarder");return;}
-  const header="Nom;Type;Naissance;Décédé;Décès;Notes\n";
-  const lines=data.map(p=>{
-    return[
-      p.nom,
-      p.type,
-      fmtDateFr(p.naissance),
-      p.decede?"Oui":"Non",
-      p.decede?fmtDateFr(p.deces):"",
-      p.notes||""
-    ].join(";");
-  }).join("\n");
-  const blob=new Blob([header+lines],{type:"text/csv;charset=utf-8;"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="BirthDay_"+new Date().toISOString().slice(0,10)+".csv";
-  a.click();
-  alert("✅ Fichier CSV téléchargé");
+function ageOn(birth, onDate){
+  const b=new Date(birth), d=new Date(onDate);
+  let a = d.getFullYear()-b.getFullYear();
+  if(d.getMonth()<b.getMonth() || (d.getMonth()===b.getMonth() && d.getDate()<b.getDate())) a--;
+  return a;
 }
-
-/* === import CSV === */
-function parseCSV(text){
-  const lines=text.split(/\r?\n/).filter(l=>l.trim()!=="");
-  if(lines.length<2)return[];
-  const out=[];
-  for(let i=1;i<lines.length;i++){
-    const c=lines[i].split(";");
-    if(c.length<6)continue;
-    const nom=c[0].trim();
-    const type=c[1].trim();
-    const nais=toISO(c[2].trim());
-    const decede=/^oui$/i.test(c[3].trim());
-    const deces=toISO(c[4].trim());
-    const notes=c[5].trim();
-    if(!nom||!nais)continue;
-    out.push({nom,type,naissance:nais,decede,deces,notes});
+function nextBirthday(birth, from=new Date()){
+  const b=new Date(birth), y=from.getFullYear();
+  let n=new Date(y,b.getMonth(),b.getDate());
+  if(b.getMonth()===1 && b.getDate()===29 && !isLeap(y)) n=new Date(y,2,1);
+  if(n<stripTime(from)){
+    const y2=y+1; n=new Date(y2,b.getMonth(),b.getDate());
+    if(b.getMonth()===1 && b.getDate()===29 && !isLeap(y2)) n=new Date(y2,2,1);
   }
-  return out;
+  return n;
 }
-function importCSV(file){
-  const r=new FileReader();
-  r.onload=e=>{
-    const arr=parseCSV(e.target.result);
-    if(!arr.length){alert("Import: aucune ligne valide.");return;}
-    save(arr);
-    render();
-    alert("✅ Import terminé ("+arr.length+" lignes)");
+
+/* ======= Données ======= */
+const load = () => { try { return JSON.parse(localStorage.getItem(STORE)||'[]'); } catch { return []; } };
+const save = arr => localStorage.setItem(STORE, JSON.stringify(arr));
+let data = load();
+let filter = 'all';
+
+/* ======= Audio ======= */
+const Sound = (()=>{ 
+  let ctx, unlocked=false;
+  function ensure(){ if(!ctx){ ctx = new (window.AudioContext||window.webkitAudioContext)(); } return ctx; }
+  function tryResume(){ try{ const c=ensure(); if(c.state==='suspended') c.resume?.(); }catch{} }
+  function unlockOnce(){ if(unlocked) return; const h=async()=>{ try{ await ensure().resume(); unlocked=true; }catch{} }; ['pointerdown','touchstart','click'].forEach(e=>addEventListener(e,h,{capture:true,once:true})); }
+  function playChord(){ const c=ensure(), t=c.currentTime; const m=c.createGain(); m.gain.value=.18; m.connect(c.destination);
+    [0,0.14,0.28,0.42].forEach((dt,i)=>{ const o=c.createOscillator(), g=c.createGain(); const f=[523.25,659.25,783.99,1046.5][i];
+      o.frequency.value=f; o.type=i%2?'triangle':'sine'; g.gain.setValueAtTime(0,t+dt); g.gain.linearRampToValueAtTime(.9,t+dt+.02); g.gain.exponentialRampToValueAtTime(.001,t+dt+.9);
+      o.connect(g); g.connect(m); o.start(t+dt); o.stop(t+dt+1);
+    });
+  }
+  document.addEventListener('visibilitychange', tryResume); setTimeout(tryResume,120); setTimeout(tryResume,800);
+  return { play:playChord, tryResume, unlockOnce };
+})();
+const soundOn = ()=> localStorage.getItem(SOUND)!=='off';
+
+/* ======= Confettis (25s) ======= */
+function confetti(){
+  const body = document.body;
+  const n = 20; // nombre total de cartes
+  const symbols = ['♠️','♥️','♦️','♣️']; // les 4 couleurs de cartes
+  for(let i = 0; i < n; i++){
+    const card = document.createElement('div');
+    card.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    card.style.position = 'fixed';
+    card.style.left = Math.random() * 100 + 'vw';
+    card.style.top = (Math.random() * -300) + 'px';
+    card.style.fontSize = (22 + Math.random() * 20) + 'px';
+    card.style.opacity = 0.9;
+    card.style.transition = 'transform 11s linear, opacity 11s linear';
+    card.style.zIndex = 9999;
+    body.appendChild(card);
+
+    // chute dispersée et rotation aléatoire
+    setTimeout(() => {
+      const drift = (Math.random() - 0.5) * 400;  // dispersion horizontale
+      const fall = window.innerHeight + 120;
+      const spin = (Math.random() - 0.5) * 720;  // rotation aléatoire
+      card.style.transform = `translate(${drift}px, ${fall}px) rotate(${spin}deg)`;
+      card.style.opacity = 0;
+    }, Math.random() * 1500); // départs étalés sur 1,5s
+
+    // suppression après animation
+    setTimeout(() => card.remove(), 12000);
+  }
+}
+
+/* ======= Logo persistant ======= */
+function applyLogo(src){ const img=$('#logoImg'); if(src){ img.src=src; img.style.display='block'; } else { img.src=''; img.style.display='none'; } }
+applyLogo(localStorage.getItem(LOGO)||'');
+$('#logoPicker').addEventListener('change', async e=>{
+  const f=e.target.files?.[0]; if(!f) return;
+  const du=await resizeImageFile(f,256,256); localStorage.setItem(LOGO,du); applyLogo(du); e.target.value='';
+});
+$('#soundToggle').addEventListener('change', e=> localStorage.setItem(SOUND, e.target.checked?'on':'off'));
+
+/* ======= CSV import ======= */
+let pending=null;
+function norm(s){ return (s||'').toString().normalize('NFKC').toLowerCase().replace(/\s+/g,'').replace(/[’']/g,"'").replace(/[éèêë]/g,'e').replace(/[àâä]/g,'a').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/[ûü]/g,'u').replace(/ç/g,'c'); }
+function findHeader(aliases,H){ for(const a of aliases){ const i=H.indexOf(a); if(i>-1) return i; } return -1; }
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,''); const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+  const delim = [',',';','\t'].map(d=>({d,c:(lines[0]||'').split(d).length})).sort((a,b)=>b.c-a.c)[0].d;
+  const H=(lines[0]||'').split(delim).map(s=>norm(s));
+  const idx = { nom:H.indexOf('nom')>-1?H.indexOf('nom'):-1, type:findHeader(['type','categorie'],H),
+    naissance:findHeader(['datenaissance','naissance','birth','birthday'],H),
+    decede:findHeader(['decédé','decede','decedé','deces?','decede?','deced','deces'],H),
+    deces:findHeader(['datedeces','datedécès','decesdate','datede deces','deces'],H),
+    notes:findHeader(['notes','note','commentaires','memo'],H)
   };
-  r.readAsText(file,"utf-8");
+  const rows=lines.slice(1).map(l=>l.split(delim));
+  const mapped=[], ignored=[];
+  rows.forEach((r,i)=>{
+    const get=j=>j>=0&&j<r.length?r[j]:'';
+    const nom=(get(idx.nom)||'').trim()||'Sans nom';
+    const type=/chien/i.test(get(idx.type)||'')?'Chien':'Humain';
+    const naissance=toISO(get(idx.naissance));
+    const deces=toISO(get(idx.deces));
+    const dRaw=(get(idx.decede)||'').trim();
+    const decede=/^o/ui.test(dRaw)||/^true$/i.test(dRaw)||/^1$/.test(dRaw);
+    if(!naissance){ ignored.push(i+2); return; }
+    mapped.push({id:crypto.randomUUID(), nom, type, naissance, decede, deces:deces||null, notes:(get(idx.notes)||'').trim()});
+  });
+  return {mapped,ignored};
+}
+function showPreview(p){
+  const merges = countMerges(data,p.mapped);
+  $('#csvPreview').innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:14px">
+    <thead><tr>${['Nom','Type','Naissance','Décédé','Décès','Notes'].map(h=>`<th style="text-align:left;padding:6px;border-bottom:1px solid var(--line)">${h}</th>`).join('')}</tr></thead>
+    <tbody>${p.mapped.slice(0,12).map(x=>`<tr>
+      <td style="padding:6px;border-bottom:1px solid var(--line)">${esc(x.nom)}</td>
+      <td style="padding:6px;border-bottom:1px solid var(--line)">${x.type}</td>
+      <td style="padding:6px;border-bottom:1px solid var(--line)">${fmtDateFr(x.naissance)}</td>
+      <td style="padding:6px;border-bottom:1px solid var(--line)">${x.decede?'Oui':'Non'}</td>
+      <td style="padding:6px;border-bottom:1px solid var(--line)">${x.deces?fmtDateFr(x.deces):'—'}</td>
+      <td style="padding:6px;border-bottom:1px solid var(--line)">${esc(x.notes||'')}</td>
+    </tr>`).join('')}</tbody></table>`;
+  $('#csvStats').textContent = `${(p.mapped.length||0)} lignes • ${merges.updates} mises à jour • ${merges.inserts} ajouts${p.ignored.length?` • ${p.ignored.length} ignorées (naissance manquante)`:''}`;
+  pending=p; $('#importDlg').style.display='block';
+}
+const key = p => `${(p.nom||'').toLowerCase()}|${p.naissance}`;
+function countMerges(oldArr,newArr){ const set=new Set(oldArr.map(key)); let updates=0,inserts=0; for(const n of newArr){ set.has(key(n))?updates++:inserts++; } return {updates,inserts}; }
+function mergeByKey(oldArr,newArr){ const map=new Map(oldArr.map(p=>[key(p),p])); for(const n of newArr){ const k=key(n); map.has(k)?Object.assign(map.get(k),n):map.set(k,n); } return [...map.values()]; }
+
+/* ======= Table & tri ======= */
+function computeRow(p){
+  const now=new Date(), next=nextBirthday(p.naissance, now), days=daysBetween(now,next);
+  const ageNow = p.decede ? ageOn(p.naissance, now) : ageOn(p.naissance, now);
+  return { ...p, _next:next, _days:days, _age:ageNow };
+}
+let tSort={key:'days',dir:1}; // tri par J- croissant
+function renderTable(){
+  const q=($('#search')?.value||'').trim().toLowerCase();
+  const filtered = data.filter(p=>{
+    if(filter==='alive' && p.decede) return false;
+    if(filter==='dead' && !p.decede) return false;
+    if(filter==='dog' && p.type!=='Chien') return false;
+    return !q||(p.nom||'').toLowerCase().includes(q)||(p.notes||'').toLowerCase().includes(q);
+  });
+  const arr=filtered.map(computeRow);
+  arr.sort((a,b)=>{
+    const k=tSort.key;
+    if(k==='nom'||k==='type') return tSort.dir*((a[k]||'').toLowerCase().localeCompare((b[k]||'').toLowerCase(),'fr'));
+    if(k==='naissance') return tSort.dir*(new Date(a.naissance)-new Date(b.naissance));
+    if(k==='age') return tSort.dir*(a._age-b._age);
+    if(k==='decede') return tSort.dir*((a.decede?1:0)-(b.decede?1:0));
+    if(k==='deces'){ const va=a.deces?new Date(a.deces).getTime():Infinity, vb=b.deces?new Date(b.deces).getTime():Infinity; return tSort.dir*(va-vb); }
+    if(k==='next') return tSort.dir*(a._next-b._next);
+    if(k==='days') return tSort.dir*(a._days-b._days);
+    return 0;
+  });
+  $('#tableBody').innerHTML = arr.map(p=>`<tr data-id="${p.id}">
+      <td>${esc(p.nom)}${p.type==='Chien'?' 🐾':''}</td>
+      <td style="text-align:center">${p.type==='Chien'?'🐕':'👤'}</td>
+      <td>${fmtDateFr(p.naissance)}</td>
+      <td class="th-num">${p.decede ? `<span title="aurait aujourd’hui">${p._age}</span> <span class="small muted">aurait</span>` : p._age}</td>
+      <td class="th-center">${fmtDateFr(p._next)}</td>
+      <td class="th-num">${p._days}</td>
+      <td class="th-center">${p.decede?'Oui':'Non'}</td>
+      <td>${p.deces ? `${fmtDateFr(p.deces)} <span class="small muted">(à ${ageOn(p.naissance, p.deces)} ans)</span>` : '—'}</td>
+      <td class="th-center"><button class="secondary tiny" data-cmd="editRow" data-id="${p.id}">✏️</button></td>
+    </tr>`).join('') || `<tr><td colspan="9" class="muted" style="padding:12px">R.A.S.</td></tr>`;
+updateBadges();
+
+  // maj flèches tri
+  $$('#mainTable thead th .sort-ind').forEach(s=>s.textContent='');
+  const th=document.querySelector(`#mainTable thead th[data-key="${tSort.key}"] .sort-ind`);
+  if(th) th.textContent = tSort.dir===1?'↑':'↓';
 }
 
-/* === init === */
-document.getElementById("btnExport").onclick=exportCSV;
-document.getElementById("btnImportShow").onclick=()=>document.getElementById("btnImport").click();
-document.getElementById("btnImport").onchange=e=>{
-  const f=e.target.files[0];
-  if(f)importCSV(f);
+/* Un SEUL écouteur sur l'en-tête pour le tri */
+document.querySelector('#mainTable thead').addEventListener('click', (e)=>{
+  const th=e.target.closest('th[data-key]');
+  if(!th) return;
+  const key=th.getAttribute('data-key');
+  if(tSort.key===key){ tSort.dir = -tSort.dir; } else { tSort.key=key; tSort.dir=1; }
+  renderTable();
+});
+
+/* ======= Prochains 30j ======= */
+/* ======= Prochains 30j ======= */
+function renderUpcoming(){
+  const now = new Date();
+  const events = [];
+
+  // Anniversaires (humains + chiens, vivants + décédés)
+  for (const p of data){
+    if (p.naissance){
+      const nextBD = nextBirthday(p.naissance, now);
+      const d = daysBetween(now, nextBD);
+      if (d >= 0 && d <= 30) events.push({ who:p, kind:'anniv', next:nextBD, days:d });
+    }
+    // Souvenirs (seulement si décédé + date de décès connue)
+    if (p.decede && p.deces){
+      const nextMem = nextBirthday(p.deces, now);
+      const d2 = daysBetween(now, nextMem);
+      if (d2 >= 0 && d2 <= 30) events.push({ who:p, kind:'mem', next:nextMem, days:d2 });
+    }
+  }
+
+  events.sort((a,b)=> a.days - b.days);
+
+  $('#upcomingList').innerHTML = events.map(e=>{
+    const p = e.who;
+    const ico = e.kind==='mem' ? '🕯️' : '🎉';
+    const type = p.type==='Chien' ? '🐶' : '';
+    const cross = p.decede ? '†' : '';
+    const when = e.days===0 ? "aujourd’hui" : `dans ${e.days} j`;
+    return `
+      <div class="small" style="padding:6px 0;border-bottom:1px dashed var(--line)">
+        ${ico} <strong>${esc(p.nom)}</strong> ${type} ${cross}
+        — ${fmtDateFr(e.next)} <span class="muted">(${when})</span>
+      </div>
+    `;
+  }).join('') || `<div class="muted" style="padding:8px">R.A.S.</div>`;
+}
+
+/* ======= Bannières ======= */
+function listNames(arr){ const names=arr.map(p=>esc(p.nom)); return names.length<=2?names.join(' et '):names.slice(0,2).join(', ')+' et '+(names.length-2)+' autres'; }
+function showBanner(cls,ico,title,parts){ const b=$('#banner'); $('#bannerIcon').textContent=ico; $('#bannerTitle').textContent=title; $('#bannerText').innerHTML=parts.join(' • '); b.className='banner '+(cls||''); b.style.display='flex'; }
+function isTodayMD(dateObj){ const d=new Date(), x=new Date(dateObj); return d.getMonth()===x.getMonth() && d.getDate()===x.getDate(); }
+// --- Détection de même jour/mois (corrige 29 février) ---
+function isTodayMonthDay(dateISO){
+  if(!dateISO) return false;
+  const d = new Date(dateISO);
+  if(isNaN(d)) return false;
+  const today = new Date();
+  // gérer les anniversaires du 29/02 les années non bissextiles → 01/03
+  const mdA = (d.getMonth()===1 && d.getDate()===29 && !(today.getFullYear()%4===0 && (today.getFullYear()%100!==0 || today.getFullYear()%400===0)))
+    ? {m:2,d:1}
+    : {m:d.getMonth(), d:d.getDate()};
+  return (today.getMonth()===mdA.m) && (today.getDate()===mdA.d);
+}
+
+// --- Affichage bannière du jour ---
+function showTodayBanner(forceShow=true){
+  const today = new Date();
+
+  // Séparation vivants / souvenirs
+  const liveHumans = data.filter(p => !p.decede && p.type!=='Chien' && isTodayMonthDay(p.naissance));
+  const liveDogs   = data.filter(p => !p.decede && p.type==='Chien'  && isTodayMonthDay(p.naissance));
+  const memHumans  = data.filter(p =>  p.decede && p.type!=='Chien' && p.deces && isTodayMonthDay(p.deces));
+  const memDogs    = data.filter(p =>  p.decede && p.type==='Chien'  && p.deces && isTodayMonthDay(p.deces));
+
+  const hasLive = liveHumans.length || liveDogs.length;
+  const hasMem  = memHumans.length  || memDogs.length;
+
+  const b = document.getElementById('banner');
+  if(!hasLive && !hasMem){ b.style.display='none'; return; }
+
+  const names = arr => {
+    const n = arr.map(p=>p.nom);
+    return n.length<=2 ? n.join(' et ') : `${n.slice(0,2).join(', ')} et ${n.length-2} autres`;
+  };
+
+  // --- Bannière Souvenir prioritaire ---
+  if(hasMem){
+    b.className = 'banner mem';
+    document.getElementById('bannerIcon').textContent = '🕯️';
+    document.getElementById('bannerTitle').textContent = 'Souvenir';
+    const parts = [];
+    if(memHumans.length) parts.push(`Humains : <strong>${names(memHumans)}</strong>`);
+    if(memDogs.length)   parts.push(`Chiens : <strong>${names(memDogs)}</strong>`);
+    document.getElementById('bannerText').innerHTML = parts.join(' • ');
+    b.style.display = 'flex';
+    return;
+  }
+
+  // --- Sinon bannière festive (vivants) ---
+  b.className = 'banner';
+  document.getElementById('bannerIcon').textContent = '🎉';
+  document.getElementById('bannerTitle').textContent = "Aujourd'hui";
+  const parts = [];
+  if(liveHumans.length) parts.push(`Humains : <strong>${names(liveHumans)}</strong> — joyeux anniversaire !`);
+  if(liveDogs.length)   parts.push(`Chiens : <strong>${names(liveDogs)}</strong> — joyeux anniversaire !`);
+  document.getElementById('bannerText').innerHTML = parts.join(' • ');
+  b.style.display = 'flex';
+if(forceShow){ confetti(); if(soundOn()) tryPlayAuto(); }
+}
+function hasLiveBirthdayToday(){ const d=new Date(), MD=x=>`${x.getMonth()}-${x.getDate()}`; for(const p of data){ if(p.decede) continue; const b=new Date(p.naissance); const same = b.getMonth()===d.getMonth() && b.getDate()===d.getDate(); const feb29=(b.getMonth()===1 && b.getDate()===29 && !isLeap(d.getFullYear()) && MD(d)==='2-1'); if(same||feb29) return true; } return false; }
+function tryPlayAuto(){ try{ Sound.tryResume?.(); Sound.play(); }catch{} Sound.unlockOnce?.(); }
+
+/* ======= Tabs & Search ======= */
+$('#search').addEventListener('input', ()=> renderAll(false));
+$('#tabs').addEventListener('click', e=>{
+  const t = e.target.closest('.tab');
+  if (!t) return;
+
+  $$('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  filter = t.dataset.filter;
+
+  const isSettings = filter === 'settings';
+  const isSoon     = filter === 'soon';
+
+  $('#settings').style.display     = isSettings ? 'block' : 'none';
+  $('#upcomingCard').style.display = isSoon     ? 'block' : 'none';
+  $('#tableCard').style.display    = (!isSettings && !isSoon) ? 'block' : 'none';
+  $('#kpi').style.display          = (!isSettings && !isSoon) ? 'block' : 'none';
+
+  if (isSoon) {
+    renderUpcoming();
+    return; // empêche d'appeler renderAll quand on est sur Prochains
+  }
+
+  renderAll(false);
+});
+
+/* ======= Modale + helpers ======= */
+function attachDateAutoSlash(sel){
+  $$(sel).forEach(input=>{
+    input.addEventListener('input', e=>{
+      let v = e.target.value.replace(/\D/g,'').slice(0,8);
+      if (v.length > 2 && v.length <= 4) v = v.slice(0,2)+'/'+v.slice(2);
+      else if (v.length > 4) v = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4,8);
+      e.target.value = v;
+    });
+    input.addEventListener('blur', e=>{
+      let v = e.target.value.replace(/\D/g,'');
+      if(v.length===8){ e.target.value = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4,8); }
+    });
+  });
+}
+function openModal(p=null){
+  $('#modalTitle').textContent = p?'Modifier':'Nouvelle entrée';
+  $('#fId').value = p?.id || '';
+  $('#fNom').value = p?.nom || '';
+  $('#fType').value = p?.type || 'Humain';
+  $('#fNaissance').value = p?.naissance ? fmtDateFr(p.naissance) : '';
+  $('#fDecede').value = p?.decede ? 'Oui' : 'Non';
+  $('#fDeces').value = p?.deces ? fmtDateFr(p.deces) : '';
+  $('#fNotes').value = p?.notes || '';
+  $('#deleteBtn')?.style && ($('#deleteBtn').style.display = p ? 'inline-flex' : 'none');
+  $('#modal').style.display='block'; $('#modal').setAttribute('aria-hidden','false');
+  attachDateAutoSlash('#fNaissance, #fDeces');
+}
+function closeModal(){ $('#modal').style.display='none'; $('#modal').setAttribute('aria-hidden','true'); }
+
+/* ======= Image resize ======= */
+function resizeImageFile(file,w,h){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=()=>{ const img=new Image(); img.onload=()=>{
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      const ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+      const r=Math.min(w/img.width,h/img.height), nw=img.width*r, nh=img.height*r;
+      ctx.drawImage(img,(w-nw)/2,(h-nh)/2,nw,nh); res(c.toDataURL('image/png',0.9));
+    }; img.onerror=rej; img.src=fr.result; }; fr.onerror=rej; fr.readAsDataURL(file);
+  });
+}
+
+/* ======= App expose ======= */
+window.App = { edit:(id)=>{ const p=data.find(x=>x.id===id); if(p) openModal(p); } };
+
+/* ======= AppUI (commandes) — un seul système via data-cmd ======= */
+window.AppUI = {
+  celebrate(){ confetti(); if(soundOn()) tryPlayAuto(); showBanner('', '🎉', 'Fêter', ['Juste pour le plaisir 🎊']); },
+  openAdd(){ openModal(null); },
+  clearAll(){ if(!confirm('Supprimer TOUTES les entrées ?')) return; if(!confirm('Confirmer la suppression définitive ?')) return; data=[]; save(data); renderAll(false); },
+  onCsvChange: async (e)=>{ const f=e?.target?.files?.[0]; if(!f) return; const text=await f.text(); const p=parseCSV(text); pending=p; showPreview(p); e.target.value=''; },
+  cancelImport(){ pending=null; $('#importDlg').style.display='none'; $('#importDlg').setAttribute('aria-hidden','true'); },
+  confirmImport(){ if(!pending) return; data = mergeByKey(data,pending.mapped); save(data); pending=null; $('#importDlg').style.display='none'; $('#importDlg').setAttribute('aria-hidden','true'); 
+renderAll(true);
+updateBadges(); },
+  hideBanner(){ $('#banner').style.display='none'; },
+  testSound(){ if(soundOn()) Sound.play(); },
+  testConfetti(){ confetti(); },
+  resetLogo(){ localStorage.removeItem(LOGO); applyLogo(''); },
+  closeModal(){ closeModal(); },
+  save(){
+    const p={
+      id: $('#fId').value || crypto.randomUUID(),
+      nom: ($('#fNom').value||'').trim() || 'Sans nom',
+      type: $('#fType').value,
+      naissance: toISO($('#fNaissance').value),
+      decede: $('#fDecede').value==='Oui',
+      deces: toISO($('#fDeces').value) || null,
+      notes: ($('#fNotes').value||'').trim()
+    };
+    if(!p.naissance){ alert('Date de naissance requise (JJ/MM/AAAA)'); return; }
+    const i=data.findIndex(x=>x.id===p.id); if(i>=0) data[i]=p; else data.push(p);
+    save(data); closeModal(); renderAll(false);
+  },
+  delete(){
+    const id=$('#fId').value; if(!id) return;
+    if(confirm('Supprimer cette entrée ?')){ data=data.filter(x=>x.id!==id); save(data); closeModal(); renderAll(false); }
+  },
+  editRow(ev, el){ const id=el.getAttribute('data-id'); if(!id) return; const p=data.find(x=>x.id===id); if(p) openModal(p); },
+
+  /* Tests bannières */
+  testLiveBanner(){
+    const live = data.filter(p=>!p.decede);
+    if(live.length===0){ alert('Aucun vivant dans la liste.'); return; }
+    const sample = live.slice(0,3);
+    showBanner('', '🎉', 'Test — Anniversaire', [`<strong>${sample.map(p=>esc(p.nom)).join(', ')}</strong> — joyeux anniversaire !`]);
+    confetti();
+    if(soundOn()) tryPlayAuto();
+  },
+  testMemBanner(){
+    const mem = data.filter(p=>p.decede);
+    if(mem.length===0){ alert('Aucun souvenir (décédé) dans la liste.'); return; }
+    const sample = mem.slice(0,3);
+    showBanner('mem', '🕯️', 'Test — Souvenir', [`Souvenir (décès) pour <strong>${sample.map(p=>esc(p.nom)).join(', ')}</strong>`]);
+  }
 };
-document.getElementById("today").textContent="· "+new Date().toLocaleDateString("fr-FR");
 
-if(!load().length){
-  save([
-    {nom:"Alice Dupont",type:"Humain",naissance:"1990-10-05",decede:false,deces:"",notes:"Cousine"},
-    {nom:"Rex",type:"Chien",naissance:"2017-12-01",decede:false,deces:"",notes:"Golden"},
-    {nom:"Grand-Père Paul",type:"Humain",naissance:"1942-02-29",decede:true,deces:"2018-10-19",notes:"Aimait le jardinage"}
-  ]);
+/* ======= Délégation globale des clics (UNIQUE) ======= */
+document.addEventListener('click', (ev)=>{
+  const el = ev.target.closest('[data-cmd]');
+  if(!el) return;
+  const cmd = el.getAttribute('data-cmd');
+  const fn = window.AppUI && window.AppUI[cmd];
+  if(typeof fn === 'function'){ ev.preventDefault(); try{ fn(ev, el); }catch(e){ console.error(e); alert('Action indisponible.'); } }
+}, {capture:true});
+
+/* ======= Fichier input ======= */
+$('#csvInput').addEventListener('change', e=> AppUI.onCsvChange(e));
+
+/* ======= Rendu global ======= */
+function renderAll(play){
+  renderTable();
+  if(filter==='soon') renderUpcoming();
+  if(play) showTodayBanner(true); else showTodayBanner(false);
 }
-render();
-</script>
+
+/* ======= Démo si vide ======= */
+if(data.length===0){
+  data=[
+    {id:crypto.randomUUID(), nom:'Alice Dupont', type:'Humain', naissance:'1990-10-05', decede:false, deces:null, notes:'Cousine'},
+    {id:crypto.randomUUID(), nom:'Rex', type:'Chien', naissance:'2017-12-01', decede:false, deces:null, notes:'Golden'},
+    {id:crypto.randomUUID(), nom:'Grand-Père Paul', type:'Humain', naissance:'1942-02-29', decede:true, deces:'2018-10-19', notes:'Aimait le jardinage'}
+  ];
+  save(data);
+}
+
+function updateBadges(){
+  var humans = 0, dogs = 0;
+  for (var i=0; i<data.length; i++){
+    if (data[i].type === 'Chien') dogs++;
+    else humans++;
+  }
+  var hb = document.getElementById('humBadge');
+  var db = document.getElementById('dogBadge');
+  if (hb) hb.textContent = humans;
+  if (db) db.textContent = dogs;
+}
+/* ======= Go ======= */
+renderAll(true);
+if (soundOn()){ Sound.unlockOnce(); if (hasLiveBirthdayToday()) { tryPlayAuto(); } }
+
+})();</script>
 </body>
 </html>
