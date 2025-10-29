@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>BirthDay v4.3 — Anniversaires & souvenirs</title>
+<title>BirthDay v4.2 — Anniversaires & souvenirs</title>
 <style>
   :root{
     --y-50:#fff3bf; --y-100:#ffe08a; --y-200:#ffd166; --y-300:#f2c94c;
@@ -100,7 +100,7 @@
   <div class="wrap">
     <div class="title">
       <div class="logo" id="appLogo"><img id="logoImg" alt="logo"/></div>
-      <div class="brand">BirthDay <span class="ver">v4.3</span></div>
+      <div class="brand">BirthDay <span class="ver">v4.2</span></div>
       <div class="right">
         <span class="topDate" id="todayTxt">01-01-1970</span>
         <input id="search" placeholder="Rechercher un nom…"/>
@@ -735,47 +735,42 @@ function updateBadges(){
   if (hb) hb.textContent = humans;
   if (db) db.textContent = dogs;
 }
-// formate "2025-10-28T..." ou "2025-10-28" en "28/10/2025"
-function fmtDateFr(d) {
-  if (!d) return '';
-  // si c'est déjà JJ/MM/AAAA on ne touche pas
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return d;
-
-  try {
-    const obj = new Date(d);
-    if (isNaN(obj)) return '';
-    const j = String(obj.getDate()).padStart(2,'0');
-    const m = String(obj.getMonth()+1).padStart(2,'0');
-    const a = obj.getFullYear();
-    return `${j}/${m}/${a}`;
-  } catch(e) {
-    return '';
-  }
-}
-// ====== Exportation CSV avec choix d’emplacement ======
-// ====== Exportation CSV compatible import ======
+// ====== Exportation CSV JJ/MM/AAAA (compatible import) ======
 document.getElementById('exportCsvBtn').addEventListener('click', async ()=>{
   try {
-    // 1. Récupère la liste actuelle
+    // 1. récupérer les données locales
     const data = JSON.parse(localStorage.getItem('birthday_famille_v1') || '[]');
     if (!data.length) {
       alert("Aucune donnée à sauvegarder !");
       return;
     }
 
-    // 2. En-têtes attendues par l'import CSV
+    // 2. petit helper local pour formater une date ISO (AAAA-MM-JJ) -> JJ/MM/AAAA
+    function toFr(d){
+      if(!d) return '';
+      // si déjà JJ/MM/AAAA on renvoie tel quel
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return d;
+      const obj = new Date(d);
+      if (isNaN(obj)) return '';
+      const j = String(obj.getDate()).padStart(2,'0');
+      const m = String(obj.getMonth()+1).padStart(2,'0');
+      const a = obj.getFullYear();
+      return `${j}/${m}/${a}`;
+    }
+
+    // 3. en-têtes attendues par l'import CSV
     const headers = ['Nom','DateNaissance','Décédé','DateDécès','Type','Notes'];
 
-    // 3. Construit toutes les lignes en respectant ce format
+    // 4. construire les lignes
     const rows = data.map(p => {
       const Nom           = p.nom || '';
-      const DateNaissance = fmtDateFr(p.naissance); // JJ/MM/AAAA
+      const DateNaissance = toFr(p.naissance);        // JJ/MM/AAAA
       const Decede        = p.decede ? 'Oui' : 'Non';
-      const DateDeces     = p.deces ? fmtDateFr(p.deces) : '';
+      const DateDeces     = p.deces ? toFr(p.deces) : '';
       const Type          = p.type || '';
       const Notes         = p.notes || '';
 
-      // IMPORTANT : on échappe les guillemets et on sépare par ;
+      // échappe les guillemets, sépare par ;
       function cell(v){
         return `"${v.toString().replace(/"/g,'""')}"`;
       }
@@ -790,17 +785,17 @@ document.getElementById('exportCsvBtn').addEventListener('click', async ()=>{
       ].join(';');
     });
 
-    // 4. Assemble le CSV final (ligne d'en-tête + lignes)
+    // 5. contenu CSV final
     const csvContent = [
       headers.join(';'),
       ...rows
     ].join('\n');
 
-    // 5. Téléchargement avec choix d'emplacement si dispo
+    // 6. nom du fichier
     const fileName = `BirthDay-${new Date().toISOString().slice(0,10)}.csv`;
 
+    // 7. tentative : File System Access API (choix du dossier)
     if (window.showSaveFilePicker) {
-      // 🔁 Mode moderne : iOS/iPadOS 17+, Safari récent, etc.
       const handle = await window.showSaveFilePicker({
         suggestedName: fileName,
         types: [{ description: 'Fichier CSV', accept: { 'text/csv': ['.csv'] } }]
@@ -810,12 +805,12 @@ document.getElementById('exportCsvBtn').addEventListener('click', async ()=>{
       await writable.close();
       alert("✅ Fichier CSV enregistré !");
     } else {
-      // 🌐 Fallback : téléchargement direct (Safari plus ancien, Koder…)
+      // fallback iPhone / Safari classique : téléchargement direct
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = fileName;
-      a.target = '_blank';         // améliore la sauvegarde réelle dans Fichiers sur iOS
+      a.target = '_blank';
       a.rel = 'noopener';
       document.body.appendChild(a);
       a.click();
